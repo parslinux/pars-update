@@ -12,10 +12,10 @@ import sys
 
 def main():
     def addtogroup(user):
-        subprocess.call(["adduser", user, "pardus-update"])
+        subprocess.call(["adduser", user, "pars-update"])
 
     def delfromgroup(user):
-        subprocess.call(["deluser", user, "pardus-update"])
+        subprocess.call(["deluser", user, "pars-update"])
 
     if len(sys.argv) > 1:
         if sys.argv[1] == "add":

@@ -1,0 +1,7 @@
+polkit.addRule(function(action, subject) {
+    if (subject.isInGroup("pars-update")) {
+        if (action.id == "org.pars.pkexec.pars-update-sysaction") {
+            return polkit.Result.YES;
+        }
+    }
+});

@@ -14,7 +14,7 @@ elif [[ $LANG == "pt_PT.UTF-8" ]]; then
     upmessage="A atualizar"
 fi
 
-echo "$(date) - Pardus safe upgrade is starting" >> /var/log/pardus-upgrade.log
+echo "$(date) - Pars safe upgrade is starting" >> /var/log/pars-upgrade.log
 
 plymouth display-message --text="$message"
 
@@ -33,7 +33,7 @@ apt -fuyq  install ./var/cache/apt/archives/*.deb \
     --allow-downgrades \
     --allow-change-held-packages \
     -o APT::Status-Fd=1 | while read line; do
-        echo $line >> /var/log/pardus-upgrade.log
+        echo $line >> /var/log/pars-upgrade.log
         echo $line > /dev/console
         if echo $line | grep "pmstatus" > /dev/null
         then

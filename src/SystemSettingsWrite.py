@@ -11,8 +11,8 @@ from configparser import ConfigParser
 
 
 def main():
-    configdir = "/etc/pardus/"
-    configfile = "pardus-update.conf"
+    configdir = "/etc/pars/"
+    configfile = "pars-update.conf"
     config = ConfigParser(strict=False)
 
     def write_lastupdate(timestamp):

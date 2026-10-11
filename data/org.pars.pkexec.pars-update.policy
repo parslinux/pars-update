@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD polkit Policy Configuration 1.0//EN"
+"http://www.freedesktop.org/software/polkit/policyconfig-1.dtd">
+<policyconfig>
+
+  <vendor>Pars Developers</vendor>
+  <vendor_url>https://www.pardus.org.tr</vendor_url>
+
+  <action id="org.pars.pkexec.pars-update-sysaction">
+    <description>Pars Update Authentication</description>
+    <message>Authentication is required for Pars Update</message>
+    <message xml:lang="pt">A autenticação é necessária para a atualização do Pars</message>
+    <message xml:lang="tr">Pars Güncelleyici için yetkilendirme gerekiyor</message>
+    <icon_name>preferences-system</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/share/pars/pars-update/src/SysActions.py</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+  </action>
+
+  <action id="org.pars.pkexec.pars-update-aptsourceaction">
+    <description>Pars Update Authentication</description>
+    <message>Authentication is required for Pars Update</message>
+    <message xml:lang="pt">A autenticação é necessária para a atualização do Pars</message>
+    <message xml:lang="tr">Pars Güncelleyici için yetkilendirme gerekiyor</message>
+    <icon_name>preferences-system</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/share/pars/pars-update/src/AptSourceActions.py</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+  </action>
+
+  <action id="org.pars.pkexec.pars-update-aptupdateaction">
+    <description>Pars Update Authentication</description>
+    <message>Authentication is required for Pars Update</message>
+    <message xml:lang="pt">A autenticação é necessária para a atualização do Pars</message>
+    <message xml:lang="tr">Pars Güncelleyici için yetkilendirme gerekiyor</message>
+    <icon_name>preferences-system</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>yes</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/share/pars/pars-update/src/AutoAptUpdate.py</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+  </action>
+
+  <action id="org.pars.pkexec.pars-update-systemsettingswrite">
+    <description>Pars Update Authentication</description>
+    <message>Authentication is required for Pars Update</message>
+    <message xml:lang="pt">A autenticação é necessária para a atualização do Pars</message>
+    <message xml:lang="tr">Pars Güncelleyici için yetkilendirme gerekiyor</message>
+    <icon_name>preferences-system</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>yes</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/share/pars/pars-update/src/SystemSettingsWrite.py</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+  </action>
+
+  <action id="org.pars.pkexec.pars-update-groupaction">
+    <description>Pars Update Authentication</description>
+    <message>Authentication is required for Pars Update</message>
+    <message xml:lang="pt">A autenticação é necessária para a atualização do Pars</message>
+    <message xml:lang="tr">Pars Güncelleyici için yetkilendirme gerekiyor</message>
+    <icon_name>preferences-system</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/share/pars/pars-update/src/Group.py</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+  </action>
+
+</policyconfig>

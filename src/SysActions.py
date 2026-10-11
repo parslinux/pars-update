@@ -17,8 +17,8 @@ from shutil import rmtree
 import apt
 import apt_pkg
 
-locale.bindtextdomain('pardus-update', '/usr/share/locale')
-locale.textdomain('pardus-update')
+locale.bindtextdomain('pars-update', '/usr/share/locale')
+locale.textdomain('pars-update')
 
 
 def main():
@@ -31,7 +31,7 @@ def main():
             apt_pkg.pkgsystem_lock()
         except SystemError as e:
             msg = "{}".format(e)
-            print("pardus-update: {}".format(msg), file=sys.stderr)
+            print("pars-update: {}".format(msg), file=sys.stderr)
             return False, msg
         apt_pkg.pkgsystem_unlock()
         return True, msg
@@ -368,12 +368,12 @@ def main():
             print("Invalid enum for askconf. Aborting.", file=sys.stderr)
             sys.exit(1)
 
-        app_safeupgrade_path = os.path.dirname(os.path.abspath(__file__)) + "/../data/pardus-safeupgrade-template.sh"
-        safeupgrade_path = os.path.dirname(os.path.abspath(__file__)) + "/../data/pardus-safeupgrade.sh"
+        app_safeupgrade_path = os.path.dirname(os.path.abspath(__file__)) + "/../data/pars-safeupgrade-template.sh"
+        safeupgrade_path = os.path.dirname(os.path.abspath(__file__)) + "/../data/pars-safeupgrade.sh"
 
-        app_service_path = os.path.dirname(os.path.abspath(__file__)) + "/../data/pardus-safeupgrade.service"
-        service_path = "/usr/lib/systemd/system/pardus-safeupgrade.service"
-        service_symlink_path = "/usr/lib/systemd/system/system-update.target.wants/pardus-safeupgrade.service"
+        app_service_path = os.path.dirname(os.path.abspath(__file__)) + "/../data/pars-safeupgrade.service"
+        service_path = "/usr/lib/systemd/system/pars-safeupgrade.service"
+        service_symlink_path = "/usr/lib/systemd/system/system-update.target.wants/pars-safeupgrade.service"
         service_symlink_dir = "/usr/lib/systemd/system/system-update.target.wants"
 
         if os.path.isfile(app_safeupgrade_path) and os.path.isfile(app_service_path):

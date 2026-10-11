@@ -1,3 +1,11 @@
+pars-update (0.7.1) unstable; urgency=medium
+
+  * Rebrand application from pardus-update to pars-update
+  * Update application ID to org.pars.update
+  * Update desktop files, polkit policies and systemd services
+
+ -- Pars Team <dev@pars.org.tr>  Mon, 12 Oct 2026 01:30:00 +0300
+
 pardus-update (0.7.0) unstable; urgency=medium
 
   [ Hugo Carvalho ]

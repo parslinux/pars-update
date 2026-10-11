@@ -20,8 +20,8 @@ msgstr ""
 
 #: ui/MainWindow.glade:13 ui/MainWindow.glade:5156 src/MainWindow.py:113
 #: src/MainWindow.py:633 src/MainWindow.py:2667
-msgid "Pardus Update"
-msgstr "Atualização Pardus"
+msgid "Pars Update"
+msgstr "Atualização Pars"
 
 #: ui/MainWindow.glade:37
 msgid "No"
@@ -40,8 +40,8 @@ msgstr ""
 "fechar a aplicação?"
 
 #: ui/MainWindow.glade:159
-msgid "Pardus Update Application"
-msgstr "Aplicação de Atualização Pardus"
+msgid "Pars Update Application"
+msgstr "Aplicação de Atualização Pars"
 
 #. Name Surname <example@examplemail.com>
 #: ui/MainWindow.glade:163
@@ -137,8 +137,8 @@ msgid "Check Updates"
 msgstr "Procurar por atualizações"
 
 #: ui/MainWindow.glade:1335
-msgid "Pardus new version is available."
-msgstr "Está disponível uma nova versão do Pardus."
+msgid "Pars new version is available."
+msgstr "Está disponível uma nova versão do Pars."
 
 #: ui/MainWindow.glade:1442 ui/MainWindow.glade:3163 ui/MainWindow.glade:3593
 #: src/MainWindow.py:711 src/MainWindow.py:1069 src/MainWindow.py:1221
@@ -331,9 +331,9 @@ msgid ""
 msgstr "Pode seguir as instruções observando o resultado do terminal abaixo."
 
 #: ui/MainWindow.glade:3044
-msgid "You can ask for help about your problem through Pardus help channels."
+msgid "You can ask for help about your problem through Pars help channels."
 msgstr ""
-"Pode pedir ajuda para o seu problema através dos canais de ajuda do Pardus."
+"Pode pedir ajuda para o seu problema através dos canais de ajuda do Pars."
 
 #: ui/MainWindow.glade:3200
 msgid "List of automatically removable all unused packages"
@@ -477,8 +477,8 @@ msgid "Ask me before starting the process (without -yq)"
 msgstr "Perguntar antes de iniciar o processo (sem -yq)"
 
 #: src/MainWindow.py:117
-msgid "About Pardus Update"
-msgstr "Acerca do Atualização Pardus"
+msgid "About Pars Update"
+msgstr "Acerca do Atualização Pars"
 
 #: src/MainWindow.py:195 src/MainWindow.py:196
 msgid "Start {} Upgrade"

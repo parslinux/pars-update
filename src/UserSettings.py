@@ -27,11 +27,11 @@ class UserSettings(object):
 
         self.user_name = GLib.get_user_name()
 
-        self.configdir = "{}/pardus/pardus-update/".format(GLib.get_user_config_dir())
+        self.configdir = "{}/pars/pars-update/".format(GLib.get_user_config_dir())
         self.configfile = "settings.ini"
 
         self.autostartdir = "{}/autostart/".format(GLib.get_user_config_dir())
-        self.autostartfile = "tr.org.pardus.update-autostart.desktop"
+        self.autostartfile = "org.pars.update-autostart.desktop"
 
         self.user_keeps_file = "{}/user_keeps".format(self.configdir)
 

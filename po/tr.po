@@ -21,8 +21,8 @@ msgstr ""
 
 #: ui/MainWindow.glade:13 ui/MainWindow.glade:5156 src/MainWindow.py:113
 #: src/MainWindow.py:633 src/MainWindow.py:2667
-msgid "Pardus Update"
-msgstr "Pardus Güncelleyici"
+msgid "Pars Update"
+msgstr "Pars Güncelleyici"
 
 #: ui/MainWindow.glade:37
 msgid "No"
@@ -41,8 +41,8 @@ msgstr ""
 "misiniz ?"
 
 #: ui/MainWindow.glade:159
-msgid "Pardus Update Application"
-msgstr "Pardus Güncelleme Uygulaması"
+msgid "Pars Update Application"
+msgstr "Pars Güncelleme Uygulaması"
 
 #. Name Surname <example@examplemail.com>
 #: ui/MainWindow.glade:163
@@ -138,8 +138,8 @@ msgid "Check Updates"
 msgstr "Güncellemeleri Kontrol Et"
 
 #: ui/MainWindow.glade:1335
-msgid "Pardus new version is available."
-msgstr "Pardus'un yeni sürümü mevcut."
+msgid "Pars new version is available."
+msgstr "Pars'ın yeni sürümü mevcut."
 
 #: ui/MainWindow.glade:1442 ui/MainWindow.glade:3163 ui/MainWindow.glade:3593
 #: src/MainWindow.py:711 src/MainWindow.py:1069 src/MainWindow.py:1221
@@ -332,9 +332,9 @@ msgid ""
 msgstr "Aşağıdaki terminal çıktısına bakarak yönergeleri uygulayabilirsiniz."
 
 #: ui/MainWindow.glade:3044
-msgid "You can ask for help about your problem through Pardus help channels."
+msgid "You can ask for help about your problem through Pars help channels."
 msgstr ""
-"Pardus yardım kanalları aracılığı ile sorununuz hakkında yardım "
+"Pars yardım kanalları aracılığı ile sorununuz hakkında yardım "
 "isteyebilirsiniz."
 
 #: ui/MainWindow.glade:3200
@@ -475,8 +475,8 @@ msgid "Ask me before starting the process (without -yq)"
 msgstr "İşleme başlamadan önce bana sor (-yq olmadan)"
 
 #: src/MainWindow.py:117
-msgid "About Pardus Update"
-msgstr "Pardus Güncelleyici Hakkında"
+msgid "About Pars Update"
+msgstr "Pars Güncelleyici Hakkında"
 
 #: src/MainWindow.py:195 src/MainWindow.py:196
 msgid "Start {} Upgrade"
@@ -688,7 +688,7 @@ msgstr "fixbroken kullanıcı isteği üzerine atlandı."
 
 #, fuzzy
 #~ msgid "Pardus Software"
-#~ msgstr "Pardus Güncelleyici"
+#~ msgstr "Pars Güncelleyici"
 
 #~ msgid "Interrupt Error"
 #~ msgstr "Kesinti Hatası"

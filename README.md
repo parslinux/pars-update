@@ -1,43 +1,83 @@
-# Pardus Update
+# Pars Update (pars-update)
 
-Pardus Update is a simple update application for debian based operating systems.
+**Pars Update**, Debian tabanlı işletim sistemleri ve Pars Linux için geliştirilmiş, hafif, güvenli ve modern bir grafiksel güncelleme yöneticisidir.
 
-It is currently a work in progress. Maintenance is done by <a href="https://www.pardus.org.tr/">Pardus</a> team.
+---
 
-[![Packaging status](https://repology.org/badge/vertical-allrepos/pardus-update.svg)](https://repology.org/project/pardus-update/versions)
+## 🌟 Temel Özellikler
 
-### **Dependencies**
+* **Modern ve Sade Arayüz:** GTK+ 3 ve VTE terminal entegrasyonu ile canlı güncelleme çıktıları.
+* **Sistem Tepsisi (Tray) Bildirimi:** Ayatana AppIndicator ile sistem durumunu ve bekleyen güncelleme sayısını arka plandan takip etme.
+* **Güvenli Çevrimdışı Güncelleme:** Systemd `system-update.target` ve Plymouth açılış ekranı üzerinden oturumu riske atmadan güvenli yükseltme.
+* **Yetki Ayrımı (Polkit):** GUI süreci yetkisiz çalışırken, paket işlemleri Polkit üzerinden güvenli şekilde yürütülür.
+* **Parolasız Güncelleme:** İsteğe bağlı `pars-update` grubu ile her güncellemede parola girmeden işlem yapabilme.
+* **Önbellek & Artık Paket Temizliği:** İndirilen `.deb` paketlerini, kullanılmayan bağımlılıkları ve artık yapılandırma dosyalarını tek tıkla temizleme.
+* **Kaynak Listesi Onarımı:** Bozuk `sources.list` girdilerini otomatik tespit edip varsayılanlara döndürme.
+* **Seçilebilir Güncellemeler:** Kullanıcının yalnızca istediği paketleri seçerek güncelleyebilmesi.
 
-This application is developed based on Python3 and GTK+ 3. Dependencies:
+---
+
+## 📸 Ekran Görüntüleri
+
+| Ana Güncelleme Ekranı | Paket Seçimi ve Detaylar |
+| :---: | :---: |
+| ![Pars Update 1](screenshots/pardus-update-1.png) | ![Pars Update 2](screenshots/pardus-update-2.png) |
+
+---
+
+## 🚀 Hızlı Başlangıç
+
+### Bağımlılıkları Yükleme
 ```bash
-gir1.2-glib-2.0 gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-soup-2.4 gir1.2-vte-2.91 gir1.2-ayatanaappindicator3-0.1 python3-apt python3-distro
+sudo apt update
+sudo apt install -y python3 python3-apt python3-distro gir1.2-glib-2.0 \
+    gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-soup-2.4 gir1.2-vte-2.91 \
+    gir1.2-ayatanaappindicator3-0.1 policykit-1 gettext
 ```
 
-### **Run Application from Source**
-
-Install dependencies
+### Kaynaktan Çalıştırma
 ```bash
-sudo apt install gir1.2-glib-2.0 gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-soup-2.4 gir1.2-vte-2.91 gir1.2-ayatanaappindicator3-0.1 python3-apt python3-distro
-```
-Clone the repository
-```bash
-git clone https://github.com/pardus/pardus-update.git ~/pardus-update
-```
-Run application
-```bash
-python3 ~/pardus-update/src/Main.py
+python3 src/Main.py
 ```
 
-### **Build deb package**
-
+### Debian (.deb) Paketi Derleme
 ```bash
-sudo apt install devscripts git-buildpackage
+sudo apt install -y devscripts git-buildpackage
 sudo mk-build-deps -ir
-gbp buildpackage --git-export-dir=/tmp/build/pardus-update -us -uc
+gbp buildpackage --git-export-dir=/tmp/build/pars-update -us -uc
 ```
 
-### **Screenshots**
+---
 
-![Pardus Update 1](screenshots/pardus-update-1.png)
+## 📚 Dokümantasyon Rehberi (Docs Index)
 
-![Pardus Update 2](screenshots/pardus-update-2.png)
+Projenin tüm teknik, operasyonel ve kullanıcı dokümanlarına aşağıdaki bağlantılardan ulaşabilirsiniz:
+
+### Çekirdek ve Sistem Dokümantasyonu
+* 🏗️ **[Sistem Mimarisi (ARCHITECTURE.md)](docs/ARCHITECTURE.md)**: Çift katmanlı süreç mimarisi, Polkit ve IPC entegrasyonu.
+* 📦 **[Kurulum Kılavuzu (INSTALL.md)](INSTALL.md)**: Ayrıntılı derleme, bağımlılıklar ve kurulum adımları.
+* 🛡️ **[Güvenlik Politikası (SECURITY.md)](docs/SECURITY.md)**: Yetki ayrımı, girdi doğrulama ve güvenlik açığı bildirim süreci.
+* 💻 **[Komut Satırı Referansı (CLI_REFERENCE.md)](docs/CLI_REFERENCE.md)**: `pars-update` ve arka plan betiklerinin tüm parametreleri.
+
+### Entegrasyon ve Yönetim Kılavuzları
+* 🔗 **[Uygulama ve Masaüstü Entegrasyonu (UYGULAMA_BAGLAMA.md)](docs/UYGULAMA_BAGLAMA.md)**: Desktop dosyaları, otomatik başlatma ve harici çağırma.
+* 🌐 **[Özel Depo ve Sunucu Barındırma (SELF_HOSTING_GUIDE.md)](docs/SELF_HOSTING_GUIDE.md)**: Kurumsal APT deposu ve `dists.json` sürüm uç noktası kurulumu.
+* 💾 **[Veri ve Kota Tasarrufu (DATA_SAVING_GUIDE.md)](docs/DATA_SAVING_GUIDE.md)**: Disk alanı ve mobil internet kotası tasarruf yöntemleri.
+
+### Geliştirme ve Topluluk
+* 🤝 **[Katkı Sağlama Rehberi (CONTRIBUTING.md)](CONTRIBUTING.md)**: PR iş akışı, kod standartları ve kurallar.
+* 🧪 **[Test ve Kalite Güvencesi (TESTING.md)](docs/TESTING.md)**: Birim, arayüz ve paket derleme testleri.
+* 🌍 **[Çeviri Kılavuzu (TRANSLATION_GUIDE.md)](docs/TRANSLATION_GUIDE.md)**: GNU gettext ile yeni dil ekleme ve güncelleme.
+* 🤖 **[AI & Asistan Yönergesi (CLAUDE.md)](CLAUDE.md)**: AI ajanları ve geliştiriciler için mimari standartlar.
+* 📈 **[İlerleme ve Yol Haritası (progress.md)](docs/progress.md)**: Tamamlanan ve planlanan özellikler.
+* 🏷️ **[Sürüm Yönetimi (VERSION.md)](VERSION.md)**: SemVer sürümleme politikası ve yayınlama adımları.
+* 📜 **[Değişiklik Günlüğü (CHANGELOG.md)](CHANGELOG.md)**: Sürümler arası detaylı değişiklik listesi.
+
+### Hukuki ve Finansal Prensipler
+* ⚖️ **[Kullanım Şartları ve Garanti Reddi (TERMS.md / SARTLAR.md)](TERMS.md)**: GPLv3 lisanslama ve sorumluluk sınırları.
+* 💳 **[Finansman ve Bağış Modeli (PAYMENT_INTEGRATION.md)](docs/PAYMENT_INTEGRATION.md)**: Ticari olmayan açık kaynak yapısı ve bağış kanalları.
+
+---
+
+## 📄 Lisans
+Bu proje [GNU Genel Kamu Lisansı Sürüm 3 (GPLv3)](file:///home/can/Masaüstü/projeler/mcsm/masaüstü/inceleme_düzenleme/upteda/LICENSE) altında lisanslanmıştır.

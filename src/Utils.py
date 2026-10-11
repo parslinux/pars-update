@@ -14,8 +14,8 @@ from gi.repository import Gtk, Gio, GLib
 import locale
 from locale import gettext as _
 
-locale.bindtextdomain('pardus-update', '/usr/share/locale')
-locale.textdomain('pardus-update')
+locale.bindtextdomain('pars-update', '/usr/share/locale')
+locale.textdomain('pars-update')
 
 class Utils(object):
     def __init__(self):

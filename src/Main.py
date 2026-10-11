@@ -17,10 +17,10 @@ from gi.repository import Gtk, Gio, GLib
 
 class Application(Gtk.Application):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, application_id="tr.org.pardus.update",
+        super().__init__(*args, application_id="org.pars.update",
                          flags=Gio.ApplicationFlags(8), **kwargs)
         self.window = None
-        GLib.set_prgname("tr.org.pardus.update")
+        GLib.set_prgname("org.pars.update")
 
         self.add_main_option(
             "tray",

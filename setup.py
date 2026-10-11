@@ -13,11 +13,11 @@ def create_mo_files():
     for po in os.listdir(podir):
         if po.endswith(".po"):
             os.makedirs("{}/{}/LC_MESSAGES".format(podir, po.split(".po")[0]), exist_ok=True)
-            mo_file = "{}/{}/LC_MESSAGES/{}".format(podir, po.split(".po")[0], "pardus-update.mo")
+            mo_file = "{}/{}/LC_MESSAGES/{}".format(podir, po.split(".po")[0], "pars-update.mo")
             msgfmt_cmd = 'msgfmt {} -o {}'.format(podir + "/" + po, mo_file)
             subprocess.call(msgfmt_cmd, shell=True)
             mo.append(("/usr/share/locale/" + po.split(".po")[0] + "/LC_MESSAGES",
-                       ["po/" + po.split(".po")[0] + "/LC_MESSAGES/pardus-update.mo"]))
+                       ["po/" + po.split(".po")[0] + "/LC_MESSAGES/pars-update.mo"]))
     return mo
 
 
@@ -34,12 +34,12 @@ if os.path.exists(changelog):
     f.close()
 
 data_files = [
-                 ("/usr/bin", ["pardus-update"]),
+                 ("/usr/bin", ["pars-update"]),
                  ("/usr/share/applications",
-                  ["data/tr.org.pardus.update.desktop"]),
-                 ("/usr/share/pardus/pardus-update/ui",
+                  ["data/org.pars.update.desktop"]),
+                 ("/usr/share/pars/pars-update/ui",
                   ["ui/MainWindow.glade"]),
-                 ("/usr/share/pardus/pardus-update/src",
+                 ("/usr/share/pars/pars-update/src",
                   ["src/AptSourceActions.py",
                    "src/AutoAptUpdate.py",
                    "src/Group.py",
@@ -53,46 +53,46 @@ data_files = [
                    "src/UserSettings.py",
                    "src/Utils.py",
                    "src/__version__"]),
-                 ("/usr/share/pardus/pardus-update/data",
-                  ["data/tr.org.pardus.update-autostart.desktop",
-                   "data/pardus-update.svg",
-                   "data/pardus-update-available-symbolic.svg",
-                   "data/pardus-update-error-symbolic.svg",
-                   "data/pardus-update-inprogress-symbolic.svg",
-                   "data/pardus-update-symbolic.svg",
-                   "data/pardus-update-uptodate.svg",
-                   "data/pardus-update-cantconnect.svg",
-                   "data/pardus-safeupgrade-template.sh",
-                   "data/pardus-safeupgrade.service",
+                 ("/usr/share/pars/pars-update/data",
+                  ["data/org.pars.update-autostart.desktop",
+                   "data/pars-update.svg",
+                   "data/pars-update-available-symbolic.svg",
+                   "data/pars-update-error-symbolic.svg",
+                   "data/pars-update-inprogress-symbolic.svg",
+                   "data/pars-update-symbolic.svg",
+                   "data/pars-update-uptodate.svg",
+                   "data/pars-update-cantconnect.svg",
+                   "data/pars-safeupgrade-template.sh",
+                   "data/pars-safeupgrade.service",
                    "data/style.css",
                    "data/sources.json"]),
                  ("/usr/share/polkit-1/actions",
-                  ["data/tr.org.pardus.pkexec.pardus-update.policy"]),
+                  ["data/org.pars.pkexec.pars-update.policy"]),
                  ("/etc/skel/.config/autostart",
-                  ["data/tr.org.pardus.update-autostart.desktop"]),
+                  ["data/org.pars.update-autostart.desktop"]),
                  ("/usr/share/icons/hicolor/scalable/apps/",
-                  ["data/pardus-update.svg",
-                   "data/pardus-update-available-symbolic.svg",
-                   "data/pardus-update-error-symbolic.svg",
-                   "data/pardus-update-inprogress-symbolic.svg",
-                   "data/pardus-update-symbolic.svg",
-                   "data/pardus-update-uptodate.svg",
-                   "data/pardus-update-cantconnect.svg"]),
+                  ["data/pars-update.svg",
+                   "data/pars-update-available-symbolic.svg",
+                   "data/pars-update-error-symbolic.svg",
+                   "data/pars-update-inprogress-symbolic.svg",
+                   "data/pars-update-symbolic.svg",
+                   "data/pars-update-uptodate.svg",
+                   "data/pars-update-cantconnect.svg"]),
                  ("/usr/share/polkit-1/rules.d/",
-                  ["data/pardus-update-group.rules"])
+                  ["data/pars-update-group.rules"])
              ] + create_mo_files()
 
 setup(
-    name="pardus-update",
+    name="pars-update",
     version=version,
     packages=find_packages(),
-    scripts=["pardus-update"],
+    scripts=["pars-update"],
     install_requires=["PyGObject"],
     data_files=data_files,
     author="Fatih Altun",
     author_email="fatih.altun@pardus.org.tr",
-    description="Pardus Update application",
+    description="Pars Update application",
     license="GPLv3",
-    keywords="pardus-update, update, upgrade, apt",
-    url="https://github.com/pardus/pardus-update",
+    keywords="pars-update, update, upgrade, apt",
+    url="https://github.com/pars/pars-update",
 )

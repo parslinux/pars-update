@@ -38,8 +38,8 @@ from Utils import Utils, ErrorDialog
 import locale
 from locale import gettext as _
 
-locale.bindtextdomain('pardus-update', '/usr/share/locale')
-locale.textdomain('pardus-update')
+locale.bindtextdomain('pars-update', '/usr/share/locale')
+locale.textdomain('pars-update')
 
 
 def getenv(name):
@@ -52,11 +52,11 @@ xfce_desktop = "xfce" in desktop_env
 kde_desktop = "kde" in desktop_env
 gnome_desktop = "gnome" in desktop_env
 
-ICONS_PARDUS = {
-    "available": "pardus-update-available-symbolic",
-    "normal": "pardus-update-symbolic",
-    "inprogress": "pardus-update-inprogress-symbolic",
-    "error": "pardus-update-error-symbolic",
+ICONS_PARS = {
+    "available": "pars-update-available-symbolic",
+    "normal": "pars-update-symbolic",
+    "inprogress": "pars-update-inprogress-symbolic",
+    "error": "pars-update-error-symbolic",
 }
 
 ICONS_GENERIC = {
@@ -110,12 +110,12 @@ class MainWindow(object):
         self.init_ui()
         self.monitoring()
 
-        self.about_dialog.set_program_name(_("Pardus Update"))
+        self.about_dialog.set_program_name(_("Pars Update"))
         if self.about_dialog.get_titlebar() is None:
             about_headerbar = Gtk.HeaderBar.new()
             about_headerbar.set_show_close_button(True)
-            about_headerbar.set_title(_("About Pardus Update"))
-            about_headerbar.pack_start(Gtk.Image.new_from_icon_name("pardus-update", Gtk.IconSize.LARGE_TOOLBAR))
+            about_headerbar.set_title(_("About Pars Update"))
+            about_headerbar.pack_start(Gtk.Image.new_from_icon_name("pars-update", Gtk.IconSize.LARGE_TOOLBAR))
             about_headerbar.show_all()
             self.about_dialog.set_titlebar(about_headerbar)
         # Set version
@@ -146,7 +146,7 @@ class MainWindow(object):
         GLib.idle_add(self.apt_update)
 
     def control_distupgrade(self):
-        if self.user_distro_id == "pardus":
+        if self.user_distro_id in ["pars", "pardus"]:
             try:
                 # self.user_distro_version = 19
                 # self.user_distro_codename = "ondokuz"
@@ -468,7 +468,7 @@ class MainWindow(object):
     def define_variables(self):
         system_wide = "usr/share" in os.path.dirname(os.path.abspath(__file__))
         
-        icons = ICONS_PARDUS if system_wide else ICONS_GENERIC
+        icons = ICONS_PARS if system_wide else ICONS_GENERIC
 
         # GNOME, Cinnamon, COSMIC, MATE, ...
         if not xfce_desktop:
@@ -513,7 +513,7 @@ class MainWindow(object):
             self.user_distro_id = distro.id()
             self.user_distro_version = int(distro.major_version())
             self.user_distro_codename = distro.codename().lower()
-            self.pargnome23 = gnome_desktop and self.user_distro_id == "pardus" and self.user_distro_version == 23
+            self.pargnome23 = gnome_desktop and (self.user_distro_id in ["pars", "pardus"]) and self.user_distro_version == 23
         except Exception as e:
             print("{}".format(e))
             self.user_distro_id = None
@@ -620,17 +620,17 @@ class MainWindow(object):
         system_wide = "usr/share" in os.path.dirname(os.path.abspath(__file__))
         if not system_wide:
             self.main_window.set_default_icon_from_file(
-                os.path.dirname(os.path.abspath(__file__)) + "/../data/pardus-update.svg")
+                os.path.dirname(os.path.abspath(__file__)) + "/../data/pars-update.svg")
             self.about_dialog.set_logo(None)
             self.ui_uptodate_image.set_from_pixbuf(
                 GdkPixbuf.Pixbuf.new_from_file_at_size(
-                    os.path.dirname(os.path.abspath(__file__)) + "/../data/pardus-update-uptodate.svg", 288, 288))
+                    os.path.dirname(os.path.abspath(__file__)) + "/../data/pars-update-uptodate.svg", 288, 288))
 
     def init_indicator(self):
         self.indicator = appindicator.Indicator.new(
-            "pardus-update", self.icon_normal, appindicator.IndicatorCategory.APPLICATION_STATUS)
+            "pars-update", self.icon_normal, appindicator.IndicatorCategory.APPLICATION_STATUS)
         self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
-        self.indicator.set_title(_("Pardus Update"))
+        self.indicator.set_title(_("Pars Update"))
         self.menu = Gtk.Menu()
 
         self.item_update = Gtk.MenuItem()
@@ -1279,7 +1279,7 @@ class MainWindow(object):
 
         if self.user_groups:
             self.ui_passwordless_button.set_visible(True)
-            if "pardus-update" in self.user_groups:
+            if "pars-update" in self.user_groups:
                 self.ui_passwordless_button_label.set_label(_("Disable Passwordless Usage"))
             else:
                 self.ui_passwordless_button_label.set_label(_("Enable Passwordless Usage"))
@@ -1290,7 +1290,7 @@ class MainWindow(object):
     def on_ui_passwordless_button_clicked(self, button):
         self.grouperrormessage = ""
         self.ui_passwordless_button.set_sensitive(False)
-        if "pardus-update" in self.user_groups:
+        if "pars-update" in self.user_groups:
             command = ["/usr/bin/pkexec", os.path.dirname(os.path.abspath(__file__)) + "/Group.py", "del",
                        self.UserSettings.user_name]
         else:
@@ -2659,12 +2659,12 @@ class Notification(GObject.GObject):
                           (str,))
     }
 
-    def __init__(self, summary="", body="", icon="pardus-update", appid="tr.org.pardus-update", only_info=False):
+    def __init__(self, summary="", body="", icon="pars-update", appid="org.pars.update", only_info=False):
         GObject.GObject.__init__(self)
         self.appid = appid
         if Notify.is_initted():
             Notify.uninit()
-        Notify.init(_("Pardus Update"))
+        Notify.init(_("Pars Update"))
         self.notification = Notify.Notification.new(summary, body, icon)
         self.notification.set_hint("desktop-entry", GLib.Variant("s", appid))
         if not only_info:
@@ -2679,7 +2679,7 @@ class Notification(GObject.GObject):
 
     def update_callback(self, widget, action):
         # subprocess.Popen(["/home/fatih/Desktop/pardus-update/src/Main.py", "--page", "updateinfo"])
-        subprocess.Popen(["/usr/bin/pardus-update", "--page", "updateinfo"])
+        subprocess.Popen(["/usr/bin/pars-update", "--page", "updateinfo"])
         # subprocess.Popen(["gtk-launch", self.appid])
         self.emit('notify-action', action)
 

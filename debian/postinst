@@ -1,5 +1,5 @@
 #!/bin/bash
 
-getent group pardus-update &> /dev/null || addgroup --system pardus-update || true
+getent group pars-update &> /dev/null || addgroup --system pars-update || true
 
 exit 0

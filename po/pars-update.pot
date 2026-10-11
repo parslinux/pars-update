@@ -19,7 +19,7 @@ msgstr ""
 
 #: ui/MainWindow.glade:13 ui/MainWindow.glade:5156 src/MainWindow.py:113
 #: src/MainWindow.py:633 src/MainWindow.py:2667
-msgid "Pardus Update"
+msgid "Pars Update"
 msgstr ""
 
 #: ui/MainWindow.glade:37
@@ -37,7 +37,7 @@ msgid ""
 msgstr ""
 
 #: ui/MainWindow.glade:159
-msgid "Pardus Update Application"
+msgid "Pars Update Application"
 msgstr ""
 
 #. Name Surname <example@examplemail.com>
@@ -132,7 +132,7 @@ msgid "Check Updates"
 msgstr ""
 
 #: ui/MainWindow.glade:1335
-msgid "Pardus new version is available."
+msgid "Pars new version is available."
 msgstr ""
 
 #: ui/MainWindow.glade:1442 ui/MainWindow.glade:3163 ui/MainWindow.glade:3593
@@ -314,7 +314,7 @@ msgid ""
 msgstr ""
 
 #: ui/MainWindow.glade:3044
-msgid "You can ask for help about your problem through Pardus help channels."
+msgid "You can ask for help about your problem through Pars help channels."
 msgstr ""
 
 #: ui/MainWindow.glade:3200
@@ -450,7 +450,7 @@ msgid "Ask me before starting the process (without -yq)"
 msgstr ""
 
 #: src/MainWindow.py:117
-msgid "About Pardus Update"
+msgid "About Pars Update"
 msgstr ""
 
 #: src/MainWindow.py:195 src/MainWindow.py:196

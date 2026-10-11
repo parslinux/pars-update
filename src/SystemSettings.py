@@ -12,8 +12,8 @@ from configparser import ConfigParser
 class SystemSettings(object):
     def __init__(self):
 
-        self.configdir = "/etc/pardus/"
-        self.configfile = "pardus-update.conf"
+        self.configdir = "/etc/pars/"
+        self.configfile = "pars-update.conf"
 
         self.config = ConfigParser(strict=False)
 
