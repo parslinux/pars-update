@@ -487,6 +487,7 @@ class MainWindow(object):
         self.icon_inprogress = icons["inprogress"]
         self.icon_error = icons["error"]
 
+        self.Package = None
         self.autoupdate_glibid = None
         self.autoupdate_monitoring_glibid = None
         self.monitoring_timeoutadd_sec = 60
@@ -562,17 +563,20 @@ class MainWindow(object):
         h = 1080
         try:
             display = Gdk.Display.get_default()
-            monitor = display.get_primary_monitor()
-            geometry = monitor.get_geometry()
-            w = geometry.width
-            h = geometry.height
-            s = Gdk.Monitor.get_scale_factor(monitor)
+            monitor = display.get_primary_monitor() if display else None
+            if not monitor and display and display.get_n_monitors() > 0:
+                monitor = display.get_monitor(0)
+            if monitor:
+                geometry = monitor.get_geometry()
+                w = geometry.width
+                h = geometry.height
+                s = Gdk.Monitor.get_scale_factor(monitor)
 
-            if w > 1920 or h > 1080:
-                width = int(w / 3.339)
-                height = int(h / 1.661)
+                if w > 1920 or h > 1080:
+                    width = int(w / 3.339)
+                    height = int(h / 1.661)
 
-            self.main_window.resize(width, height)
+                self.main_window.resize(width, height)
 
         except Exception as e:
             print("Error in controlDisplay: {}".format(e))
@@ -886,7 +890,7 @@ class MainWindow(object):
         GLib.idle_add(self.ui_settings_apt_clear_box.set_visible, True)
         GLib.idle_add(self.ui_settingsapt_stack.set_visible_child_name, "apt")
 
-        if self.Package.backend_name == "pacman":
+        if get_package_manager() == "pacman":
             apt_clean_path = "/var/cache/pacman/pkg"
             apt_lists_path = "/var/lib/pacman/sync"
         else:
@@ -1555,7 +1559,7 @@ class MainWindow(object):
             self.main_window.get_application().quit()
 
     def monitoring(self):
-        if self.Package.backend_name == "pacman":
+        if get_package_manager() == "pacman":
             self.aptlist_directory = "/var/lib/pacman/sync"
             self.dpkg_status_path = "/var/lib/pacman/local"
         else:
