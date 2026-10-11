@@ -161,7 +161,7 @@ class MainWindow(object):
             except Exception as e:
                 print("{}".format(e))
         else:
-            print("{} not yet supported for dist upgrade".format(distro.id()))
+            print("{} not yet supported for dist upgrade".format(self.user_distro_id))
 
     def server_get_dist(self, response):
         def get_dist_key():
