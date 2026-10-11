@@ -27,20 +27,25 @@
 
 ## 🚀 Hızlı Başlangıç
 
-### Bağımlılıkları Yükleme
+### 1. Tek Komutla Otomatik Kurulum
+Bağımlılıkları otomatik kurup uygulamayı sisteme yüklemek için:
 ```bash
-sudo apt update
-sudo apt install -y python3 python3-apt python3-distro gir1.2-glib-2.0 \
-    gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-soup-2.4 gir1.2-vte-2.91 \
-    gir1.2-ayatanaappindicator3-0.1 policykit-1 gettext
+sudo ./install.sh
 ```
 
-### Kaynaktan Çalıştırma
+### 2. Kolay Çalıştırma
 ```bash
-python3 src/Main.py
+./run.sh
+# veya sistem tepsisi modunda:
+./run.sh --tray
 ```
 
-### Debian (.deb) Paketi Derleme
+### 3. Kaldırma
+```bash
+sudo ./uninstall.sh
+```
+
+### 4. Debian (.deb) Paketi Derleme
 ```bash
 sudo apt install -y devscripts git-buildpackage
 sudo mk-build-deps -ir

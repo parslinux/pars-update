@@ -4,14 +4,45 @@ Bu kılavuz, **Pars Update (`pars-update`)** uygulamasının bağımlılıkları
 
 ---
 
-## 1. Sistem Gereksinimleri
+## 1. Otomatik Kurulum, Çalıştırma ve Kaldırma Betikleri (Tavsiye Edilen)
+
+Proje kök dizininde hazır bulunan `.sh` betikleri ile tüm işlemleri tek komutla yapabilirsiniz:
+
+### 1.1 Otomatik Kurulum (install.sh)
+Bağımlılıkları kontrol eder, eksik paketleri yükler, çevirileri derler, polkit kurallarını ve sistem gruplarını ayarlar:
+```bash
+sudo ./install.sh
+```
+
+### 1.2 Kolay Çalıştırma (run.sh)
+Gerekli bağımlılıkları kontrol eder ve uygulamayı çalıştırır:
+```bash
+# Normal pencere modunda:
+./run.sh
+
+# Sistem tepsisi modunda:
+./run.sh --tray
+
+# Doğrudan güncellemeler sayfasında:
+./run.sh --page updateinfo
+```
+
+### 1.3 Temiz Kaldırma (uninstall.sh)
+Sistemdeki tüm Pars Update ikili dosyalarını, simgelerini, polkit kurallarını ve servislerini güvenle temizler:
+```bash
+sudo ./uninstall.sh
+```
+
+---
+
+## 2. Sistem Gereksinimleri
 * **İşletim Sistemi:** Debian 11/12+, Pardus 19/21/23+, Pars Linux veya Ubuntu 20.04+
 * **Python:** Python 3.8 veya üzeri
 * **Masaüstü Ortamı:** GNOME, XFCE, KDE Plasma, MATE, Cinnamon veya LXQt
 
 ---
 
-## 2. Gerekli Bağımlılıkların Kurulması
+## 3. Gerekli Bağımlılıkların Manuel Kurulması
 
 Aşağıdaki paketler Pars Update'in çalışması için zorunludur:
 
