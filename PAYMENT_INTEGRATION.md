@@ -1,1 +1,0 @@
-docs/PAYMENT_INTEGRATION.md

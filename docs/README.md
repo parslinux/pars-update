@@ -21,7 +21,7 @@
 
 | Ana Güncelleme Ekranı | Paket Seçimi ve Detaylar |
 | :---: | :---: |
-| ![Pars Update 1](screenshots/pardus-update-1.png) | ![Pars Update 2](screenshots/pardus-update-2.png) |
+| ![Pars Update 1](../screenshots/pardus-update-1.png) | ![Pars Update 2](../screenshots/pardus-update-2.png) |
 
 ---
 
@@ -54,30 +54,30 @@ gbp buildpackage --git-export-dir=/tmp/build/pars-update -us -uc
 Projenin tüm teknik, operasyonel ve kullanıcı dokümanlarına aşağıdaki bağlantılardan ulaşabilirsiniz:
 
 ### Çekirdek ve Sistem Dokümantasyonu
-* 🏗️ **[Sistem Mimarisi (ARCHITECTURE.md)](docs/ARCHITECTURE.md)**: Çift katmanlı süreç mimarisi, Polkit ve IPC entegrasyonu.
+* 🏗️ **[Sistem Mimarisi (ARCHITECTURE.md)](ARCHITECTURE.md)**: Çift katmanlı süreç mimarisi, Polkit ve IPC entegrasyonu.
 * 📦 **[Kurulum Kılavuzu (INSTALL.md)](INSTALL.md)**: Ayrıntılı derleme, bağımlılıklar ve kurulum adımları.
-* 🛡️ **[Güvenlik Politikası (SECURITY.md)](docs/SECURITY.md)**: Yetki ayrımı, girdi doğrulama ve güvenlik açığı bildirim süreci.
-* 💻 **[Komut Satırı Referansı (CLI_REFERENCE.md)](docs/CLI_REFERENCE.md)**: `pars-update` ve arka plan betiklerinin tüm parametreleri.
+* 🛡️ **[Güvenlik Politikası (SECURITY.md)](SECURITY.md)**: Yetki ayrımı, girdi doğrulama ve güvenlik açığı bildirim süreci.
+* 💻 **[Komut Satırı Referansı (CLI_REFERENCE.md)](CLI_REFERENCE.md)**: `pars-update` ve arka plan betiklerinin tüm parametreleri.
 
 ### Entegrasyon ve Yönetim Kılavuzları
-* 🔗 **[Uygulama ve Masaüstü Entegrasyonu (UYGULAMA_BAGLAMA.md)](docs/UYGULAMA_BAGLAMA.md)**: Desktop dosyaları, otomatik başlatma ve harici çağırma.
-* 🌐 **[Özel Depo ve Sunucu Barındırma (SELF_HOSTING_GUIDE.md)](docs/SELF_HOSTING_GUIDE.md)**: Kurumsal APT deposu ve `dists.json` sürüm uç noktası kurulumu.
-* 💾 **[Veri ve Kota Tasarrufu (DATA_SAVING_GUIDE.md)](docs/DATA_SAVING_GUIDE.md)**: Disk alanı ve mobil internet kotası tasarruf yöntemleri.
+* 🔗 **[Uygulama ve Masaüstü Entegrasyonu (UYGULAMA_BAGLAMA.md)](UYGULAMA_BAGLAMA.md)**: Desktop dosyaları, otomatik başlatma ve harici çağırma.
+* 🌐 **[Özel Depo ve Sunucu Barındırma (SELF_HOSTING_GUIDE.md)](SELF_HOSTING_GUIDE.md)**: Kurumsal APT deposu ve `dists.json` sürüm uç noktası kurulumu.
+* 💾 **[Veri ve Kota Tasarrufu (DATA_SAVING_GUIDE.md)](DATA_SAVING_GUIDE.md)**: Disk alanı ve mobil internet kotası tasarruf yöntemleri.
 
 ### Geliştirme ve Topluluk
 * 🤝 **[Katkı Sağlama Rehberi (CONTRIBUTING.md)](CONTRIBUTING.md)**: PR iş akışı, kod standartları ve kurallar.
-* 🧪 **[Test ve Kalite Güvencesi (TESTING.md)](docs/TESTING.md)**: Birim, arayüz ve paket derleme testleri.
-* 🌍 **[Çeviri Kılavuzu (TRANSLATION_GUIDE.md)](docs/TRANSLATION_GUIDE.md)**: GNU gettext ile yeni dil ekleme ve güncelleme.
+* 🧪 **[Test ve Kalite Güvencesi (TESTING.md)](TESTING.md)**: Birim, arayüz ve paket derleme testleri.
+* 🌍 **[Çeviri Kılavuzu (TRANSLATION_GUIDE.md)](TRANSLATION_GUIDE.md)**: GNU gettext ile yeni dil ekleme ve güncelleme.
 * 🤖 **[AI & Asistan Yönergesi (CLAUDE.md)](CLAUDE.md)**: AI ajanları ve geliştiriciler için mimari standartlar.
-* 📈 **[İlerleme ve Yol Haritası (progress.md)](docs/progress.md)**: Tamamlanan ve planlanan özellikler.
+* 📈 **[İlerleme ve Yol Haritası (progress.md)](progress.md)**: Tamamlanan ve planlanan özellikler.
 * 🏷️ **[Sürüm Yönetimi (VERSION.md)](VERSION.md)**: SemVer sürümleme politikası ve yayınlama adımları.
 * 📜 **[Değişiklik Günlüğü (CHANGELOG.md)](CHANGELOG.md)**: Sürümler arası detaylı değişiklik listesi.
 
 ### Hukuki ve Finansal Prensipler
 * ⚖️ **[Kullanım Şartları ve Garanti Reddi (TERMS.md / SARTLAR.md)](TERMS.md)**: GPLv3 lisanslama ve sorumluluk sınırları.
-* 💳 **[Finansman ve Bağış Modeli (PAYMENT_INTEGRATION.md)](docs/PAYMENT_INTEGRATION.md)**: Ticari olmayan açık kaynak yapısı ve bağış kanalları.
+* 💳 **[Finansman ve Bağış Modeli (PAYMENT_INTEGRATION.md)](PAYMENT_INTEGRATION.md)**: Ticari olmayan açık kaynak yapısı ve bağış kanalları.
 
 ---
 
 ## 📄 Lisans
-Bu proje [GNU Genel Kamu Lisansı Sürüm 3 (GPLv3)](file:///home/can/Masaüstü/projeler/mcsm/masaüstü/inceleme_düzenleme/upteda/LICENSE) altında lisanslanmıştır.
+Bu proje [GNU Genel Kamu Lisansı Sürüm 3 (GPLv3)](../LICENSE) altında lisanslanmıştır.

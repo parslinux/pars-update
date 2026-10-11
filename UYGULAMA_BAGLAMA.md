@@ -1,1 +1,0 @@
-docs/UYGULAMA_BAGLAMA.md

@@ -1,1 +1,0 @@
-docs/SELF_HOSTING_GUIDE.md
