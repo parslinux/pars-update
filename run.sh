@@ -33,13 +33,11 @@ if [ "$EUID" -eq 0 ]; then
     echo -e "Güvenlik gereği lütfen normal kullanıcı hesabınızla çalıştırın."
 fi
 
-# Python bağımlılık kontrolü
-python3 -c "import gi, distro, apt" >/dev/null 2>&1 || {
-    echo -e "${RED}[Hata] Gerekli Python kütüphaneleri eksik görünüyor.${NC}"
+# Python ve GTK bağımlılık kontrolü
+python3 -c "import gi; gi.require_version('Gtk', '3.0'); from gi.repository import Gtk" >/dev/null 2>&1 || {
+    echo -e "${RED}[Hata] Gerekli Python/GTK kütüphaneleri eksik görünüyor.${NC}"
     echo -e "Lütfen kurulum betiğini çalıştırın veya bağımlılıkları yükleyin:"
     echo -e "  ${YELLOW}sudo ./install.sh${NC}"
-    echo -e "veya elle:"
-    echo -e "  ${YELLOW}sudo apt install -y python3-apt python3-distro gir1.2-gtk-3.0 gir1.2-vte-2.91 gir1.2-ayatanaappindicator3-0.1${NC}"
     exit 1
 }
 

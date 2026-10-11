@@ -1,18 +1,19 @@
 # Pars Update (pars-update)
 
-**Pars Update**, Debian tabanlı işletim sistemleri ve Pars Linux için geliştirilmiş, hafif, güvenli ve modern bir grafiksel güncelleme yöneticisidir.
+**Pars Update**, Pars Linux, Arch Linux ve Debian tabanlı işletim sistemleri için geliştirilmiş, çoklu paket yöneticisi (Pacman & APT) destekli, hafif, güvenli ve modern bir grafiksel güncelleme yöneticisidir.
 
 ---
 
 ## 🌟 Temel Özellikler
 
+* **Çift Paket Yöneticisi Desteği:** Arch Linux (`pacman`) ve Debian (`apt`) sistemlerini otomatik algılayıp yerel araçlarıyla çalışma.
 * **Modern ve Sade Arayüz:** GTK+ 3 ve VTE terminal entegrasyonu ile canlı güncelleme çıktıları.
 * **Sistem Tepsisi (Tray) Bildirimi:** Ayatana AppIndicator ile sistem durumunu ve bekleyen güncelleme sayısını arka plandan takip etme.
 * **Güvenli Çevrimdışı Güncelleme:** Systemd `system-update.target` ve Plymouth açılış ekranı üzerinden oturumu riske atmadan güvenli yükseltme.
 * **Yetki Ayrımı (Polkit):** GUI süreci yetkisiz çalışırken, paket işlemleri Polkit üzerinden güvenli şekilde yürütülür.
 * **Parolasız Güncelleme:** İsteğe bağlı `pars-update` grubu ile her güncellemede parola girmeden işlem yapabilme.
-* **Önbellek & Artık Paket Temizliği:** İndirilen `.deb` paketlerini, kullanılmayan bağımlılıkları ve artık yapılandırma dosyalarını tek tıkla temizleme.
-* **Kaynak Listesi Onarımı:** Bozuk `sources.list` girdilerini otomatik tespit edip varsayılanlara döndürme.
+* **Önbellek & Artık Paket Temizliği:** İndirilen paket önbelleklerini ve yetim (orphan) bağımlılıkları tek tıkla temizleme.
+* **Kaynak Listesi Onarımı:** Bozuk kaynak listesi girdilerini tespit edip yönetebilme.
 * **Seçilebilir Güncellemeler:** Kullanıcının yalnızca istediği paketleri seçerek güncelleyebilmesi.
 
 ---
@@ -28,7 +29,7 @@
 ## 🚀 Hızlı Başlangıç
 
 ### 1. Tek Komutla Otomatik Kurulum
-Bağımlılıkları otomatik kurup uygulamayı sisteme yüklemek için:
+Bağımlılıkları otomatik kurup uygulamayı sisteme yüklemek için (Arch ve Debian otomatik algılanır):
 ```bash
 sudo ./install.sh
 ```
@@ -45,12 +46,16 @@ sudo ./install.sh
 sudo ./uninstall.sh
 ```
 
-### 4. Debian (.deb) Paketi Derleme
-```bash
-sudo apt install -y devscripts git-buildpackage
-sudo mk-build-deps -ir
-gbp buildpackage --git-export-dir=/tmp/build/pars-update -us -uc
-```
+### 4. Paket Derleme
+* **Arch Linux (PKGBUILD):**
+  ```bash
+  makepkg -si
+  ```
+* **Debian (.deb):**
+  ```bash
+  sudo apt install -y devscripts git-buildpackage
+  gbp buildpackage --git-export-dir=/tmp/build/pars-update -us -uc
+  ```
 
 ---
 

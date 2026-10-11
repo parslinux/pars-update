@@ -15,7 +15,10 @@ from locale import gettext as _
 from pathlib import Path
 from shutil import rmtree
 
-from aptsources import sourceslist as aptsourceslist
+try:
+    from aptsources import sourceslist as aptsourceslist
+except ImportError:
+    aptsourceslist = None
 
 locale.bindtextdomain('pars-update', '/usr/share/locale')
 locale.textdomain('pars-update')

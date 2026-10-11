@@ -12,7 +12,11 @@ import subprocess
 import threading
 from datetime import datetime
 
-import distro
+try:
+    import distro
+except ImportError:
+    distro = None
+from PackageManagerBackend import get_distro_info, get_package_manager
 import gi
 
 gi.require_version("GLib", "2.0")
@@ -490,8 +494,12 @@ class MainWindow(object):
         self.upgrade_inprogress = False
         self.distup_download_inprogress = False
         self.laststack = None
-        self.aptlist_directory = "/var/lib/apt/lists"
-        self.dpkg_directory = "/var/lib/dpkg"
+        if get_package_manager() == "pacman":
+            self.aptlist_directory = "/var/lib/pacman/sync"
+            self.dpkg_directory = "/var/lib/pacman"
+        else:
+            self.aptlist_directory = "/var/lib/apt/lists"
+            self.dpkg_directory = "/var/lib/dpkg"
 
         self.clean_residuals_clicked = False
 
@@ -509,17 +517,11 @@ class MainWindow(object):
         self.sources_err_count = 0
         self.sources_err_lines = ""
 
-        try:
-            self.user_distro_id = distro.id()
-            self.user_distro_version = int(distro.major_version())
-            self.user_distro_codename = distro.codename().lower()
-            self.pargnome23 = gnome_desktop and (self.user_distro_id in ["pars", "pardus"]) and self.user_distro_version == 23
-        except Exception as e:
-            print("{}".format(e))
-            self.user_distro_id = None
-            self.user_distro_version = None
-            self.user_distro_codename = None
-            self.pargnome23 = False
+        d_info = get_distro_info()
+        self.user_distro_id = d_info["id"]
+        self.user_distro_version = d_info["major_version"]
+        self.user_distro_codename = d_info["codename"]
+        self.pargnome23 = gnome_desktop and (self.user_distro_id in ["pars", "pardus"]) and self.user_distro_version == 23
 
         try:
             static_sources_file = os.path.dirname(os.path.abspath(__file__)) + "/../data/sources.json"
@@ -884,8 +886,12 @@ class MainWindow(object):
         GLib.idle_add(self.ui_settings_apt_clear_box.set_visible, True)
         GLib.idle_add(self.ui_settingsapt_stack.set_visible_child_name, "apt")
 
-        apt_clean_path = "/var/cache/apt/archives"
-        apt_lists_path = "/var/lib/apt/lists"
+        if self.Package.backend_name == "pacman":
+            apt_clean_path = "/var/cache/pacman/pkg"
+            apt_lists_path = "/var/lib/pacman/sync"
+        else:
+            apt_clean_path = "/var/cache/apt/archives"
+            apt_lists_path = "/var/lib/apt/lists"
 
         self.aptclear_clean_list = self.Utils.get_path_files(apt_clean_path)
         self.aptclear_lists_list = self.Utils.get_path_files(apt_lists_path)
@@ -1549,16 +1555,25 @@ class MainWindow(object):
             self.main_window.get_application().quit()
 
     def monitoring(self):
-        self.aptlist_directory = "/var/lib/apt/lists"
-        self.dpkg_status_path = "/var/lib/dpkg/status"
+        if self.Package.backend_name == "pacman":
+            self.aptlist_directory = "/var/lib/pacman/sync"
+            self.dpkg_status_path = "/var/lib/pacman/local"
+        else:
+            self.aptlist_directory = "/var/lib/apt/lists"
+            self.dpkg_status_path = "/var/lib/dpkg/status"
 
-        self.apt_dir = Gio.file_new_for_path(self.aptlist_directory)
-        self.apt_monitor = self.apt_dir.monitor_directory(0, None)
-        self.apt_monitor.connect('changed', self.on_apt_changed)
+        if os.path.exists(self.aptlist_directory):
+            self.apt_dir = Gio.file_new_for_path(self.aptlist_directory)
+            self.apt_monitor = self.apt_dir.monitor_directory(0, None)
+            self.apt_monitor.connect('changed', self.on_apt_changed)
 
-        self.dpkg_status_file = Gio.file_new_for_path(self.dpkg_status_path)
-        self.dpkg_monitor = self.dpkg_status_file.monitor_file(0, None)
-        self.dpkg_monitor.connect('changed', self.on_apt_changed)
+        if os.path.exists(self.dpkg_status_path):
+            self.dpkg_status_file = Gio.file_new_for_path(self.dpkg_status_path)
+            if os.path.isdir(self.dpkg_status_path):
+                self.dpkg_monitor = self.dpkg_status_file.monitor_directory(0, None)
+            else:
+                self.dpkg_monitor = self.dpkg_status_file.monitor_file(0, None)
+            self.dpkg_monitor.connect('changed', self.on_apt_changed)
 
     def on_apt_changed(self, file_monitor, file, other_file, event_type):
         print("{} file changed, update_inprogress: {}, upgrade_inprogress: {}".format(

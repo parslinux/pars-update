@@ -58,10 +58,19 @@ Pars Update, güvenlik ilkeleri gereği **çift katmanlı (Privilege-Separated)*
   * Terminal çıktılarını kullanıcıya canlı göstermek için `Vte.Terminal` bileşenini kullanır.
   * Sistem tepsisi simgesini (`AyatanaAppIndicator3`) ve masaüstü bildirimlerini (`Notify`) kontrol eder.
 
-### 2.2 Veri ve Paket Yönetimi Katmanı
+### 2.2 Veri ve Paket Yönetimi Katmanı (Çoklu Dağıtım Desteği)
+* **`PackageManagerBackend.py` (Çoklu Arka Uç Motoru):**
+  * Dağıtımı (`/etc/os-release` veya `distro`) ve paket yöneticisini dinamik olarak algılar.
+  * **`PacmanBackend` (Arch Linux):**
+    * `checkupdates` ve `pacman -Qu` ile güncellenebilir paketleri toplar.
+    * `pacman -Si` ve `pacman -Qi` ile paket bilgilerini ve indirme/kurulum boyutlarını hesaplar.
+    * `pacman -Qdtq` ile yetim (orphan/autoremovable) paketleri tespit eder.
+    * `vercmp` CLI ikilisi ile paket sürümlerini güvenle karşılaştırır.
+    * `/var/lib/pacman/db.lck` kilidini denetler.
 * **`Package.py`:**
-  * `apt.Cache()` API'sini kullanarak kurulabilir, güncellenebilir ve kaldırılabilir paket listelerini sorgular.
-  * Gerekli indirme boyutunu ve disk alanı değişimini hesaplar.
+  * Çift yönlü köprü (Facade) görevi görür.
+  * Sistem Debian tabanlı ise `python3-apt` (`apt.Cache()`) üzerinden, Arch Linux tabanlı ise `PacmanBackend` üzerinden çalışır.
+  * Arayüze standartlaştırılmış veri yapıları sunar.
 * **`RepoDistControl.py`:**
   * Dağıtım sunucusundaki `dists.json` dosyasını çekerek ana sürüm yükseltmesi (Distribution Upgrade) olup olmadığını kontrol eder.
 

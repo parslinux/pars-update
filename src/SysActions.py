@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Sep 18 14:53:00 2020
-
-@author: fatih
+System update actions executed via pkexec for Pars Update.
+Supports Debian/APT and Arch Linux/Pacman.
 """
+
 import json
 import locale
 import os
@@ -14,8 +14,16 @@ import sys
 from pathlib import Path
 from shutil import rmtree
 
-import apt
-import apt_pkg
+from PackageManagerBackend import get_package_manager
+
+try:
+    import apt
+    import apt_pkg
+    HAVE_APT = True
+except ImportError:
+    HAVE_APT = False
+    apt = None
+    apt_pkg = None
 
 locale.bindtextdomain('pars-update', '/usr/share/locale')
 locale.textdomain('pars-update')
@@ -23,8 +31,101 @@ locale.textdomain('pars-update')
 
 def main():
     keep_list = ["firmware-b43-installer", "firmware-b43legacy-installer", "ttf-mscorefonts-installer"]
+    backend = get_package_manager()
 
+    def parse_packages(packages):
+        if not packages or not packages.strip():
+            return []
+
+        packagelist = packages.split()
+        valid_packages = []
+
+        package_re = re.compile(r'^[a-zA-Z0-9][a-zA-Z0-9+._-]+(?::[a-zA-Z0-9]+)?$')
+
+        for item in packagelist:
+            item = item.strip()
+            if not item:
+                continue
+
+            if package_re.fullmatch(item):
+                valid_packages.append(item)
+            else:
+                raise ValueError(f"Invalid package name detected: '{item}'")
+
+        return valid_packages
+
+    # ---------------- Pacman (Arch Linux) Implementations ----------------
+    def pacman_control_lock():
+        lock_path = "/var/lib/pacman/db.lck"
+        if os.path.exists(lock_path):
+            msg = "pacman database locked (/var/lib/pacman/db.lck)"
+            print("pars-update: {}".format(msg), file=sys.stderr)
+            return False, msg
+        return True, ""
+
+    def pacman_subupdate():
+        subprocess.call(["pacman", "-Sy"],
+                        env={**os.environ, 'LC_ALL': 'C'})
+
+    def pacman_subupgrade(yq_state, dpkg_conf_state, keeps=None):
+        lock, msg = pacman_control_lock()
+        if not lock:
+            print("pacman lock error", file=sys.stderr)
+            sys.exit(11)
+
+        cmd = ["pacman", "-Syu"]
+        if yq_state == "yes":
+            cmd.append("--noconfirm")
+
+        try:
+            valid_keeps = parse_packages(keeps)
+        except ValueError as e:
+            print(f"Security Alert: {e}", file=sys.stderr)
+            sys.exit(1)
+
+        if valid_keeps:
+            cmd.extend(["--ignore", ",".join(valid_keeps)])
+
+        result = subprocess.run(cmd, env={**os.environ, "LC_ALL": "C"})
+        sys.exit(result.returncode)
+
+    def pacman_removeauto():
+        res = subprocess.run(["pacman", "-Qdtq"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                             env={**os.environ, "LC_ALL": "C"})
+        orphans = [p.strip() for p in res.stdout.decode("utf-8", errors="ignore").splitlines() if p.strip()]
+        if orphans:
+            cmd = ["pacman", "-Rns", "--noconfirm"] + orphans
+            result = subprocess.run(cmd, env={**os.environ, "LC_ALL": "C"})
+            sys.exit(result.returncode)
+        else:
+            print("No orphaned packages to remove.", file=sys.stdout)
+            sys.exit(0)
+
+    def pacman_aptclear(clean, autoremove, aptlists):
+        if clean == "1":
+            subprocess.call(["pacman", "-Sc", "--noconfirm"],
+                            env={**os.environ, "LC_ALL": "C"})
+            print("pacman package cache cleared", file=sys.stdout)
+        if autoremove == "1":
+            res = subprocess.run(["pacman", "-Qdtq"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                 env={**os.environ, "LC_ALL": "C"})
+            orphans = [p.strip() for p in res.stdout.decode("utf-8", errors="ignore").splitlines() if p.strip()]
+            if orphans:
+                subprocess.call(["pacman", "-Rns", "--noconfirm"] + orphans,
+                                env={**os.environ, "LC_ALL": "C"})
+        if aptlists == "1":
+            subprocess.call(["pacman", "-Syy", "--noconfirm"],
+                            env={**os.environ, "LC_ALL": "C"})
+
+    def pacman_dpkgconfigure():
+        lock_path = "/var/lib/pacman/db.lck"
+        if os.path.exists(lock_path):
+            print("Checking pacman lock: lock exists.", file=sys.stderr)
+
+    # ---------------- APT (Debian) Implementations ----------------
     def control_lock():
+        if not HAVE_APT:
+            return pacman_control_lock()
         msg = ""
         apt_pkg.init_system()
         try:
@@ -37,10 +138,15 @@ def main():
         return True, msg
 
     def subupdate():
+        if backend == "pacman" or not HAVE_APT:
+            return pacman_subupdate()
         subprocess.call(["apt", "update"],
                         env={**os.environ, 'DEBIAN_FRONTEND': 'noninteractive'})
 
     def subupgrade(yq_state, dpkg_conf_state, keeps=None):
+        if backend == "pacman" or not HAVE_APT:
+            return pacman_subupgrade(yq_state, dpkg_conf_state, keeps)
+
         lock, msg = control_lock()
         if not lock:
             if "E:" in msg and "/var/lib/dpkg/lock-frontend" in msg:
@@ -88,14 +194,21 @@ def main():
         sys.exit(result.returncode)
 
     def dpkgconfigure():
+        if backend == "pacman" or not HAVE_APT:
+            return pacman_dpkgconfigure()
         subprocess.call(["dpkg", "--configure", "-a"],
                         env={**os.environ, 'DEBIAN_FRONTEND': 'noninteractive'})
 
     def aptclean():
+        if backend == "pacman" or not HAVE_APT:
+            return pacman_aptclear("1", "0", "0")
         subprocess.call(["apt", "clean"],
                         env={**os.environ, 'DEBIAN_FRONTEND': 'noninteractive'})
 
     def removeresidual(packages):
+        if backend == "pacman" or not HAVE_APT:
+            print("No residual packages on Arch Linux.", file=sys.stdout)
+            sys.exit(0)
 
         try:
             valid_packages = parse_packages(packages)
@@ -129,10 +242,15 @@ def main():
                             env={**os.environ, 'DEBIAN_FRONTEND': 'noninteractive'})
 
     def removeauto():
+        if backend == "pacman" or not HAVE_APT:
+            return pacman_removeauto()
         subprocess.call(["apt", "autoremove", "-yq"],
                         env={**os.environ, 'DEBIAN_FRONTEND': 'noninteractive'})
 
     def controldistupgrade(sourceslist):
+        if backend == "pacman" or not HAVE_APT:
+            print("Distribution upgrade sources not applicable for Arch rolling release.", file=sys.stderr)
+            sys.exit(0)
 
         if not is_safe_sources(sourceslist):
             print("Malicious apt source detected. Execution aborted.", file=sys.stderr)
@@ -183,11 +301,9 @@ def main():
             try:
                 cache[kp].mark_keep()
             except Exception as e:
-                print("{} not found".format(kp))
-                print("{}".format(e))
+                print("{} not found: {}".format(kp, e))
 
         changes = cache.get_changes()
-        print(changes)
         if changes:
             changes_available = True
             for package in changes:
@@ -215,24 +331,16 @@ def main():
             upgradable_changes_packages = [pkg.name for pkg in changes if pkg.is_upgradable]
             to_keep = list(set(upgradable_cache_packages).difference(set(upgradable_changes_packages)))
 
-        to_upgrade = sorted(to_upgrade)
-        to_install = sorted(to_install)
-        to_delete = sorted(to_delete)
-        to_keep = sorted(to_keep)
-
         rcu["download_size"] = download_size
         rcu["freed_size"] = freed_size
         rcu["install_size"] = install_size
-        # rcu["to_upgrade"] = to_upgrade
-        # rcu["to_install"] = to_install
-        # rcu["to_delete"] = to_delete
-        # rcu["to_keep"] = to_keep
         rcu["changes_available"] = changes_available
         rcu["cache_error"] = cache_error
 
         def summary(packagename):
             package = cache.get(packagename)
-            if package is None: return ""
+            if package is None:
+                return ""
             try:
                 return package.candidate.summary
             except AttributeError:
@@ -241,7 +349,8 @@ def main():
 
         def candidate_version(packagename):
             package = cache[packagename]
-            if package is None: return ""
+            if package is None:
+                return ""
             try:
                 version = package.candidate.version
             except:
@@ -253,7 +362,8 @@ def main():
 
         def installed_version(packagename):
             package = cache[packagename]
-            if package is None: return ""
+            if package is None:
+                return ""
             try:
                 version = package.installed.version
             except:
@@ -273,7 +383,7 @@ def main():
         to_delete_list = []
         for package in to_delete:
             to_delete_list.append({"name": package, "oldversion": installed_version(package),
-                                   "newversion": candidate_version(package), "summary": summary(package)})
+                                    "newversion": candidate_version(package), "summary": summary(package)})
 
         to_keep_list = []
         for package in to_keep:
@@ -285,35 +395,21 @@ def main():
         rcu["to_delete"] = to_delete_list
         rcu["to_keep"] = to_keep_list
 
-        # print("freed_size {}".format(rcu["freed_size"]))
-        # print("download_size {}".format(rcu["download_size"]))
-        # print("install_size {}".format(rcu["install_size"]))
-        # print("to_upgrade {}".format(rcu["to_upgrade"]))
-        # print("to_install {}".format(rcu["to_install"]))
-        # print("to_delete {}".format(rcu["to_delete"]))
-        # print("to_keep {}".format(rcu["to_keep"]))
-        # print("changes_available {}".format(rcu["changes_available"]))
-        # print("cache_error {}".format(rcu["cache_error"]))
-
-        print(rcu)
-
-        changes_file = open(rc_file, "w")
-        json.dump(rcu, changes_file, indent=2)
-        changes_file.flush()
-        changes_file.close()
+        with open(rc_file, "w") as changes_file:
+            json.dump(rcu, changes_file, indent=2)
 
         apt_pkg.config.set("Dir::Etc::sourcelist", old_sources_list)
         apt_pkg.config.set("Dir::Etc::sourceparts", old_sources_list_d)
         apt_pkg.config.set("APT::List-Cleanup", old_cleanup)
 
     def downupgrade(sourceslist):
-
+        if backend == "pacman" or not HAVE_APT:
+            return
         if not is_safe_sources(sourceslist):
             print("Malicious apt source detected. Execution aborted.", file=sys.stderr)
             sys.exit(1)
 
         aptclean()
-
         sfile = open("/tmp/tmp-sources.list", "w")
         sfile.write(sourceslist)
         sfile.flush()
@@ -337,24 +433,13 @@ def main():
             try:
                 cache[kp].mark_keep()
             except Exception as e:
-                print("{} not found".format(kp))
-                print("{}".format(e))
+                print("{} not found: {}".format(kp, e))
 
         cache.fetch_archives()
 
-        # subprocess.call(["apt", "full-upgrade", "-yqd"],
-        #                 env={**os.environ, 'DEBIAN_FRONTEND': 'noninteractive'})
-
     def distupgradeoffline(sourceslist, askconf):
-
-        # aptlists_folder = "/var/lib/apt/lists/"
-        # for filename in os.listdir(aptlists_folder):
-        #     file_path = os.path.join(aptlists_folder, filename)
-        #     try:
-        #         if os.path.isfile(file_path) or os.path.islink(file_path):
-        #             os.unlink(file_path)
-        #     except Exception as e:
-        #         print("Failed to delete {}. Reason: {}".format(file_path, e))
+        if backend == "pacman" or not HAVE_APT:
+            return
 
         if not is_safe_sources(sourceslist):
             print("Malicious apt source detected. Execution aborted.", file=sys.stderr)
@@ -370,34 +455,26 @@ def main():
 
         app_safeupgrade_path = os.path.dirname(os.path.abspath(__file__)) + "/../data/pars-safeupgrade-template.sh"
         safeupgrade_path = os.path.dirname(os.path.abspath(__file__)) + "/../data/pars-safeupgrade.sh"
-
         app_service_path = os.path.dirname(os.path.abspath(__file__)) + "/../data/pars-safeupgrade.service"
         service_path = "/usr/lib/systemd/system/pars-safeupgrade.service"
         service_symlink_path = "/usr/lib/systemd/system/system-update.target.wants/pars-safeupgrade.service"
         service_symlink_dir = "/usr/lib/systemd/system/system-update.target.wants"
 
         if os.path.isfile(app_safeupgrade_path) and os.path.isfile(app_service_path):
-
             with open(app_safeupgrade_path, "r") as app_safeupgrade_file:
                 contents = app_safeupgrade_file.read()
                 new_contents = contents.replace("@@askconf@@", askconf_arg)
 
-            # create new safe upgrade script from template
-            usp = open(safeupgrade_path, "w")
-            usp.write(new_contents)
-            usp.flush()
-            usp.close()
+            with open(safeupgrade_path, "w") as usp:
+                usp.write(new_contents)
             os.chmod(safeupgrade_path, 0o0755)
 
-            # service file with new execpath and symlink
             with open(app_service_path, "r") as app_service_file:
                 scontents = app_service_file.read()
                 new_scontents = scontents.replace("@@execpath@@", os.path.abspath(safeupgrade_path))
 
-            user_service_file = open(service_path, "w")
-            user_service_file.write(new_scontents)
-            user_service_file.flush()
-            user_service_file.close()
+            with open(service_path, "w") as user_service_file:
+                user_service_file.write(new_scontents)
 
             if not os.path.exists(service_symlink_dir):
                 os.makedirs(service_symlink_dir, exist_ok=True)
@@ -406,35 +483,24 @@ def main():
                 service_symlink_file.unlink(missing_ok=True)
             service_symlink_file.symlink_to(service_path)
 
-            # sources.list.d
             sdir = "/etc/apt/sources.list.d"
             if os.path.isdir(sdir):
-                slistd = os.listdir(sdir)
-                for slist in slistd:
-                    commented = ""
+                for slist in os.listdir(sdir):
                     if slist.endswith(".list"):
                         try:
                             with open(os.path.join(sdir, slist), "r") as sread:
-                                for line in sread.readlines():
-                                    commented += "#{}".format(line)
+                                commented = "".join(["#{}".format(line) for line in sread.readlines()])
                             with open(os.path.join(sdir, slist), "w") as swrite:
-                                swrite.writelines(commented)
-                                swrite.flush()
-                                swrite.close()
+                                swrite.write(commented)
                         except Exception as e:
                             print("{}".format(e))
 
-            # sources.list
-            sfile = open("/etc/apt/sources.list", "w")
-            sfile.write(sourceslist)
-            sfile.flush()
-            sfile.close()
+            with open("/etc/apt/sources.list", "w") as sfile:
+                sfile.write(sourceslist)
 
-            # apt lists clean
             rmtree("/var/lib/apt/lists/", ignore_errors=True)
             subupdate()
 
-            # set plymouth
             current_theme = ""
             try:
                 with open("/etc/plymouth/plymouthd.conf", "r") as f:
@@ -442,45 +508,32 @@ def main():
                         if line.strip().startswith("Theme="):
                             current_theme = line.strip().split("=", 1)[1]
                             break
-            except Exception as e:
-                print("{}".format(e))
+            except Exception:
                 current_theme = ""
             if current_theme != "bgrt":
                 subprocess.run(["plymouth-set-default-theme", "bgrt"])
                 subprocess.run(["update-initramfs", "-u"])
 
-            # system-update file
             sup_path = "/system-update"
             if os.path.exists(sup_path):
                 os.remove(sup_path)
-            sub_path_file = open(sup_path, "w")
-            sub_path_file.flush()
-            sub_path_file.close()
+            with open(sup_path, "w"):
+                pass
 
-            # sync
-            syncp = subprocess.Popen(["/usr/bin/sync"])
-            syncp.wait()
+            subprocess.run(["/usr/bin/sync"])
 
             if os.path.exists(safeupgrade_path) and os.path.exists(service_path) and os.path.exists(sup_path):
-
-                # reboot
                 os.system('dbus-send --system --print-reply --dest=org.freedesktop.login1 /org/freedesktop/login1 '
                           '"org.freedesktop.login1.Manager.Reboot" boolean:true')
             else:
-                print("safeupgrade_path: {}, exists: {}".format(safeupgrade_path, os.path.exists(safeupgrade_path)),
-                      file=sys.stderr)
-                print("service_path: {}, exists: {}".format(service_path, os.path.exists(service_path)),
-                      file=sys.stderr)
-                print("systemupdate_path: {}, exists: {}".format(sup_path, os.path.exists(sup_path)), file=sys.stderr)
                 if os.path.exists(sup_path):
                     os.remove(sup_path)
         else:
             print("{} file not exists.".format(app_safeupgrade_path))
 
     def aptclear(clean, autoremove, aptlists):
-        print(clean)
-        print(autoremove)
-        print(aptlists)
+        if backend == "pacman" or not HAVE_APT:
+            return pacman_aptclear(clean, autoremove, aptlists)
         if clean == "1":
             aptclean()
             print("apt cache files cleared", file=sys.stdout)
@@ -502,7 +555,6 @@ def main():
         ]
 
         for line in str(sources_text).splitlines():
-
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
@@ -517,45 +569,25 @@ def main():
 
         return True
 
-    def parse_packages(packages):
-        if not packages or not packages.strip():
-            return []
-
-        packagelist = packages.split()
-        valid_packages = []
-
-        package_re = re.compile(r'^[a-z0-9][a-z0-9+.-]+(?::[a-z0-9]+)?$')
-
-        for item in packagelist:
-            item = item.strip()
-            if not item:
-                continue
-
-            if package_re.fullmatch(item):
-                valid_packages.append(item)
-            else:
-                raise ValueError(f"Invalid package name detected: '{item}'")
-
-        return valid_packages
-
     if len(sys.argv) > 1:
-        if sys.argv[1] == "upgrade":
+        action = sys.argv[1]
+        if action == "upgrade":
             subupdate()
             subupgrade(sys.argv[2], sys.argv[3], sys.argv[4] if len(sys.argv) > 4 else None)
-        elif sys.argv[1] == "removeresidual":
+        elif action == "removeresidual":
             removeresidual(sys.argv[2])
-        elif sys.argv[1] == "removeauto":
+        elif action == "removeauto":
             removeauto()
-        elif sys.argv[1] == "controldistupgrade":
+        elif action == "controldistupgrade":
             aptclean()
             controldistupgrade(sys.argv[2])
-        elif sys.argv[1] == "downupgrade":
+        elif action == "downupgrade":
             downupgrade(sys.argv[2])
-        elif sys.argv[1] == "distupgradeoffline":
+        elif action == "distupgradeoffline":
             distupgradeoffline(sys.argv[2], sys.argv[3])
-        elif sys.argv[1] == "dpkgconfigure":
+        elif action == "dpkgconfigure":
             dpkgconfigure()
-        elif sys.argv[1] == "aptclear":
+        elif action == "aptclear":
             aptclear(sys.argv[2], sys.argv[3], sys.argv[4])
         else:
             print("unknown argument error")

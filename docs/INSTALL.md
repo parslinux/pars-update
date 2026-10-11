@@ -36,7 +36,9 @@ sudo ./uninstall.sh
 ---
 
 ## 2. Sistem Gereksinimleri
-* **İşletim Sistemi:** Debian 11/12+, Pardus 19/21/23+, Pars Linux veya Ubuntu 20.04+
+* **İşletim Sistemi:** 
+  * Debian 11/12+, Pardus 19/21/23+, Pars Linux veya Ubuntu 20.04+ (APT tabanı)
+  * Arch Linux, Manjaro, EndeavourOS, Garuda (Pacman tabanı)
 * **Python:** Python 3.8 veya üzeri
 * **Masaüstü Ortamı:** GNOME, XFCE, KDE Plasma, MATE, Cinnamon veya LXQt
 
@@ -44,8 +46,23 @@ sudo ./uninstall.sh
 
 ## 3. Gerekli Bağımlılıkların Manuel Kurulması
 
-Aşağıdaki paketler Pars Update'in çalışması için zorunludur:
+### 3.1 Arch Linux (Pacman)
+```bash
+sudo pacman -S --needed \
+    python \
+    python-setuptools \
+    python-gobject \
+    gtk3 \
+    libnotify \
+    libsoup \
+    vte3 \
+    libappindicator-gtk3 \
+    polkit \
+    gettext \
+    pacman-contrib
+```
 
+### 3.2 Debian / Ubuntu / Pars (APT)
 ```bash
 sudo apt update
 sudo apt install -y \
@@ -109,7 +126,20 @@ sudo apt install ../pars-update_*.deb
 
 ---
 
-## 5. `setup.py` ile Yerel Kurulum (Geliştirme Amaçlı)
+## 5. Arch Linux Paketi Oluşturma ve Kurma (PKGBUILD)
+
+Arch Linux üzerinde standart paket oluşturup kurmak için:
+
+```bash
+# Proje kök dizininde:
+makepkg -si
+```
+
+Veya `PKGBUILD` kullanarak AUR paketi olarak dağıtabilirsiniz.
+
+---
+
+## 6. `setup.py` ile Yerel Kurulum (Geliştirme Amaçlı)
 
 Paket yöneticisi haricinde doğrudan `/usr/local` veya `/usr` altına kurmak için:
 
