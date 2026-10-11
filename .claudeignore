@@ -1,0 +1,78 @@
+# .claudeignore - Claude Code & AI Asistan Hariç Tutma Listesi
+
+# Git iç yapıları
+.git/
+.github/
+
+# Python derleme ve önbellek dosyaları
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+sdist/
+eggs/
+develop-eggs/
+.installed.cfg
+*.egg
+
+# Sanal ortamlar (Virtual Environments)
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Debian paketleme ve geçici derleme çıktıları
+debian/.debhelper/
+debian/debhelper-build-stamp
+debian/files
+debian/pars-update/
+debian/pars-update.substvars
+debian/*.log
+*.deb
+*.build
+*.buildinfo
+*.changes
+*.upload
+*.tar.gz
+*.tar.xz
+*.dsc
+
+# Gettext derlenmiş ikili çeviriler
+*.mo
+po/*/LC_MESSAGES/*.mo
+
+# Loglar ve geçici dosyalar
+*.log
+/tmp/
+*.tmp
+*.swp
+*.bak
+*~
+.directory
+
+# Büyük görsel ve ekran görüntüleri (Bağlam tasarrufu için)
+screenshots/
+data/*.png
+data/*.jpg
+
+# Test ve kapsam raporları
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# IDE ve Editör ayarları
+.idea/
+.vscode/
+*.swp
+*.swo
