@@ -151,14 +151,14 @@ class MainWindow(object):
         GLib.idle_add(self.apt_update)
 
     def control_distupgrade(self):
-        if self.user_distro_id in ["pars", "pardus"]:
+        if self.user_distro_id == "pars":
             try:
                 # self.user_distro_version = 19
                 # self.user_distro_codename = "ondokuz"
 
                 self.repo_dist_control = RepoDistControl()
                 self.repo_dist_control.ServerGet = self.server_get_dist
-                self.repo_dist_control.get("https://depo.pardus.org.tr/dists.json")
+                self.repo_dist_control.get("https://depo.parslinux.org/dists.json")
             except Exception as e:
                 print("{}".format(e))
         else:
@@ -166,12 +166,8 @@ class MainWindow(object):
 
     def server_get_dist(self, response):
         def get_dist_key():
-            if self.user_distro_codename == "ondokuz" or self.user_distro_codename == "yirmibir" or \
-                    self.user_distro_codename == "yirmiuc" or self.user_distro_codename == "yirmibes" or \
-                    self.user_distro_codename == "yirmiyedi" or self.user_distro_codename == "yirmidokuz":
-                return "pardus"
-            elif self.user_distro_codename == "etap-yirmiuc" or self.user_distro_codename == "etap-yirmibes":
-                return "etap"
+            if self.user_distro_codename in ["ondokuz", "yirmibir", "yirmiuc", "yirmibes", "yirmiyedi", "yirmidokuz"]:
+                return "pars"
             else:
                 return "none-{}".format(self.user_distro_codename)
 
@@ -523,7 +519,7 @@ class MainWindow(object):
         self.user_distro_id = d_info["id"]
         self.user_distro_version = d_info["major_version"]
         self.user_distro_codename = d_info["codename"]
-        self.pargnome23 = gnome_desktop and (self.user_distro_id in ["pars", "pardus"]) and self.user_distro_version == 23
+        self.pargnome23 = gnome_desktop and (self.user_distro_id == "pars") and self.user_distro_version == 23
 
         try:
             static_sources_file = os.path.dirname(os.path.abspath(__file__)) + "/../data/sources.json"
@@ -2740,7 +2736,6 @@ class Notification(GObject.GObject):
             self.notification.show()
 
     def update_callback(self, widget, action):
-        # subprocess.Popen(["/home/fatih/Desktop/pardus-update/src/Main.py", "--page", "updateinfo"])
         subprocess.Popen(["/usr/bin/pars-update", "--page", "updateinfo"])
         # subprocess.Popen(["gtk-launch", self.appid])
         self.emit('notify-action', action)

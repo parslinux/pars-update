@@ -34,7 +34,7 @@ Bu belge, **Pars Update (`pars-update`)** projesinde kod yazarken, hata ayıklar
 
 ## 3. Temel Geliştirme Komutları
 
-### Bağımlılıkları Yükleme (Debian / Pardus / Pars)
+### Bağımlılıkları Yükleme (Debian / Pars)
 ```bash
 sudo apt install gir1.2-glib-2.0 gir1.2-gtk-3.0 gir1.2-notify-0.7 \
     gir1.2-soup-2.4 gir1.2-vte-2.91 gir1.2-ayatanaappindicator3-0.1 \

@@ -155,13 +155,12 @@
     <property name="transient-for">ui_main_window</property>
     <property name="program-name">Pars Update</property>
     <property name="version">0.1.0</property>
-    <property name="copyright">© TÜBİTAK BİLGEM</property>
+    <property name="copyright">© Pars Linux</property>
     <property name="comments" translatable="yes">Pars Update Application</property>
-    <property name="website">https://github.com/pars/pars-update</property>
-    <property name="authors">Büşra Çağlıyan &lt;busra.cagliyan@pardus.org.tr&gt;
-Fatih Altun &lt;fatih.altun@pardus.org.tr&gt;</property>
+    <property name="website">https://github.com/parslinux/pars-update</property>
+    <property name="authors">Pars Geliştirici Ekibi &lt;dev@parslinux.org&gt;</property>
     <property name="translator-credits" translatable="yes" comments="Name Surname &lt;example@examplemail.com&gt;">translator-credits</property>
-    <property name="artists">Yusuf Düzgün &lt;yusuf.duzgun@pardus.org.tr&gt;</property>
+    <property name="artists">Pars Tasarım Ekibi &lt;dev@parslinux.org&gt;</property>
     <property name="logo-icon-name">pars-update</property>
     <property name="license-type">gpl-3-0</property>
     <child internal-child="vbox">
@@ -3053,7 +3052,7 @@ Use with caution. Are you sure you want to continue?</property>
                           <object class="GtkLabel">
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
-                            <property name="label">&lt;a title='Pars Forum' href='https://forum.pardus.org.tr'&gt;forum.pardus.org.tr&lt;/a&gt;</property>
+                            <property name="label">&lt;a title='Pars Forum' href='https://forum.parslinux.org'&gt;forum.parslinux.org&lt;/a&gt;</property>
                             <property name="use-markup">True</property>
                             <property name="selectable">True</property>
                           </object>
@@ -3067,7 +3066,7 @@ Use with caution. Are you sure you want to continue?</property>
                           <object class="GtkLabel">
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
-                            <property name="label">&lt;a title='Pars Mail' href='mailto:bilgi@pardus.org.tr'&gt;bilgi@pardus.org.tr&lt;/a&gt;</property>
+                            <property name="label">&lt;a title='Pars Mail' href='mailto:iletisim@parslinux.org'&gt;iletisim@parslinux.org&lt;/a&gt;</property>
                             <property name="use-markup">True</property>
                             <property name="selectable">True</property>
                           </object>
@@ -3081,7 +3080,7 @@ Use with caution. Are you sure you want to continue?</property>
                           <object class="GtkLabel">
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
-                            <property name="label">&lt;a title='Pars Web' href='https://pardus.org.tr'&gt;pardus.org.tr&lt;/a&gt;</property>
+                            <property name="label">&lt;a title='Pars Web' href='https://parslinux.org'&gt;parslinux.org&lt;/a&gt;</property>
                             <property name="use-markup">True</property>
                             <property name="selectable">True</property>
                           </object>
@@ -5127,7 +5126,7 @@ Use with caution. Are you sure you want to continue?</property>
               <object class="GtkLabel">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="label">© TÜBİTAK BİLGEM</property>
+                <property name="label">© Pars Linux</property>
                 <attributes>
                   <attribute name="weight" value="light"/>
                 </attributes>

@@ -12,7 +12,7 @@ Bu belge, **Pars Update (`pars-update`)** projesinde tamamlanan kilometre taşla
 - [x] **Güvenli Çevrimdışı Güncelleme:** Systemd `system-update.target` ve Plymouth açılış ekranı entegrasyonu.
 - [x] **Yetki Ayrımı:** Polkit JavaScript kuralları (`.rules`) ve `pars-update` grubu ile parolasız kullanım.
 - [x] **Seçilebilir Güncellemeler:** Kullanıcının güncellenecek paketleri tek tek seçebilmesi.
-- [x] **Pars Update Rebranding:** Pardus kod tabanının Pars Update (pars-update) olarak tam uyarlanması.
+- [x] **Pars Update Rebranding:** Kod tabanının Pars Update (pars-update) olarak tam uyarlanması.
 
 ---
 

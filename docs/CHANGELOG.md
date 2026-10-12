@@ -6,7 +6,7 @@ Bu belgede **Pars Update** projesinin tüm sürümlerine ait değişiklikler, ye
 
 ## [0.7.1] - 2026-10-12
 ### Değiştirildi & Yenilendi (Rebranding)
-* Proje adı ve paket adı **pardus-update**'den **pars-update** olarak yeniden adlandırıldı.
+* Proje adı ve paket adı **pars-update** olarak belirlendi.
 * Uygulama kimliği (`application_id`) `org.pars.update` olarak güncellendi.
 * Masaüstü çalıştırma dosyaları `data/org.pars.update.desktop` ve `data/org.pars.update-autostart.desktop` olarak uyarlandı.
 * Polkit yetki politikası `data/org.pars.pkexec.pars-update.policy` ve yetki kuralları `data/pars-update-group.rules` olarak güncellendi.

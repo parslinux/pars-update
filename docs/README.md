@@ -22,7 +22,7 @@
 
 | Ana Güncelleme Ekranı | Paket Seçimi ve Detaylar |
 | :---: | :---: |
-| ![Pars Update 1](../screenshots/pardus-update-1.png) | ![Pars Update 2](../screenshots/pardus-update-2.png) |
+| ![Pars Update 1](../screenshots/pars-update-1.png) | ![Pars Update 2](../screenshots/pars-update-2.png) |
 
 ---
 

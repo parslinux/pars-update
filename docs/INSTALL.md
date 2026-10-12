@@ -37,7 +37,7 @@ sudo ./uninstall.sh
 
 ## 2. Sistem Gereksinimleri
 * **İşletim Sistemi:** 
-  * Debian 11/12+, Pardus 19/21/23+, Pars Linux veya Ubuntu 20.04+ (APT tabanı)
+  * Debian 11/12+, Pars Linux veya Ubuntu 20.04+ (APT tabanı)
   * Arch Linux, Manjaro, EndeavourOS, Garuda (Pacman tabanı)
 * **Python:** Python 3.8 veya üzeri
 * **Masaüstü Ortamı:** GNOME, XFCE, KDE Plasma, MATE, Cinnamon veya LXQt

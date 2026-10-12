@@ -1,6 +1,6 @@
-# Portuguese translation of pardus-update.
+# Portuguese translation of pars-update.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the pardus-update package.
+# This file is distributed under the same license as the pars-update package.
 # Hugo Carvalho <hugokarvalho@hotmail.com>, 2023-2026.
 #
 msgid ""

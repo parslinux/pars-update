@@ -4,7 +4,7 @@
 <policyconfig>
 
   <vendor>Pars Developers</vendor>
-  <vendor_url>https://www.pardus.org.tr</vendor_url>
+  <vendor_url>https://parslinux.org</vendor_url>
 
   <action id="org.pars.pkexec.pars-update-sysaction">
     <description>Pars Update Authentication</description>

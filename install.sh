@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Pars Update (pars-update) - Kurulum Betiği (install.sh)
-# Desteklenen Sistemler: Debian/Ubuntu/Pars/Pardus (APT) ve Arch Linux/Manjaro (Pacman)
+# Desteklenen Sistemler: Debian/Ubuntu/Pars (APT) ve Arch Linux/Manjaro (Pacman)
 # ==============================================================================
 
 set -e

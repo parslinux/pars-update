@@ -1,12 +1,12 @@
 pars-update (0.7.1) unstable; urgency=medium
 
-  * Rebrand application from pardus-update to pars-update
+  * Rebrand application from pars-update to pars-update
   * Update application ID to org.pars.update
   * Update desktop files, polkit policies and systemd services
 
- -- Pars Team <dev@pars.org.tr>  Mon, 12 Oct 2026 01:30:00 +0300
+ -- Pars Team <dev@parslinux.org>  Mon, 12 Oct 2026 01:30:00 +0300
 
-pardus-update (0.7.0) unstable; urgency=medium
+pars-update (0.7.0) unstable; urgency=medium
 
   [ Hugo Carvalho ]
   * Update Portuguese translations
@@ -36,28 +36,28 @@ pardus-update (0.7.0) unstable; urgency=medium
   * Update systemsettingswrite allow_any value
   * Update translations
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Tue, 21 Jul 2026 18:26:32 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Tue, 21 Jul 2026 18:26:32 +0300
 
-pardus-update (0.6.6) unstable; urgency=medium
+pars-update (0.6.6) unstable; urgency=medium
 
   * Fix repo dist control url
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Tue, 05 May 2026 17:51:38 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Tue, 05 May 2026 17:51:38 +0300
 
-pardus-update (0.6.5) unstable; urgency=medium
+pars-update (0.6.5) unstable; urgency=medium
 
   * Add update, upgrade in progress controls to monitoring action
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Tue, 24 Mar 2026 23:12:33 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Tue, 24 Mar 2026 23:12:33 +0300
 
-pardus-update (0.6.4) unstable; urgency=medium
+pars-update (0.6.4) unstable; urgency=medium
 
   * Add argv int control to SystemSettingsWrite
   * Rm old unused autoupgrade funcs
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Tue, 24 Mar 2026 14:15:19 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Tue, 24 Mar 2026 14:15:19 +0300
 
-pardus-update (0.6.3) unstable; urgency=medium
+pars-update (0.6.3) unstable; urgency=medium
 
   [ Büşra ÇAĞLIYAN ]
   * prevent notification when app is active
@@ -67,15 +67,15 @@ pardus-update (0.6.3) unstable; urgency=medium
   * Update pot file
   * Update Turkish translations
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Fri, 06 Mar 2026 14:21:24 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Fri, 06 Mar 2026 14:21:24 +0300
 
-pardus-update (0.6.2) unstable; urgency=medium
+pars-update (0.6.2) unstable; urgency=medium
 
   * Update .pkla as .rules due to pkla deprecated
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Mon, 24 Nov 2025 12:19:46 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Mon, 24 Nov 2025 12:19:46 +0300
 
-pardus-update (0.6.1) unstable; urgency=medium
+pars-update (0.6.1) unstable; urgency=medium
 
   [ Hugo Carvalho ]
   * Update Portuguese translations
@@ -87,9 +87,9 @@ pardus-update (0.6.1) unstable; urgency=medium
   * Update missing emblem-synchronizing-symbolic icon to alternative
   * Update app icon
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Mon, 24 Nov 2025 12:04:07 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Mon, 24 Nov 2025 12:04:07 +0300
 
-pardus-update (0.6.0) unstable; urgency=medium
+pars-update (0.6.0) unstable; urgency=medium
 
   [ Hugo Carvalho ]
   * Add/update Portuguese lang
@@ -105,7 +105,7 @@ pardus-update (0.6.0) unstable; urgency=medium
   * Fix conerror menu action sensitive
   * Add cantconnect image
   * Update cantconnect page image
-  * Add pardus-update-cantconnect.svg to setup.py
+  * Add pars-update-cantconnect.svg to setup.py
   * Add try fix button to connection error page
   * Add conerror info label with popover
   * Update conerror fix controls
@@ -116,9 +116,9 @@ pardus-update (0.6.0) unstable; urgency=medium
   * Update pot file
   * Update Turkish translations
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Wed, 08 Oct 2025 10:11:30 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Wed, 08 Oct 2025 10:11:30 +0300
 
-pardus-update (0.5.1) unstable; urgency=medium
+pars-update (0.5.1) unstable; urgency=medium
 
   [ Hugo Carvalho ]
   * Update Portuguese translations
@@ -128,9 +128,9 @@ pardus-update (0.5.1) unstable; urgency=medium
   * Update copyright
   * Update icon controls
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Thu, 28 Nov 2024 18:00:48 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Thu, 28 Nov 2024 18:00:48 +0300
 
-pardus-update (0.5.0) unstable; urgency=medium
+pars-update (0.5.0) unstable; urgency=medium
 
   [ Fatih Altun ]
   * Add package manager operations to settings
@@ -140,7 +140,7 @@ pardus-update (0.5.0) unstable; urgency=medium
   * Update some space values
   * Add etap-yirmiuc codename controls
   * Add etap-yirmibes sources
-  * Add pardus yirmibes static sources
+  * Add pars yirmibes static sources
   * Update pot file
   * Update Turkish translations
 
@@ -157,9 +157,9 @@ pardus-update (0.5.0) unstable; urgency=medium
   * Update Turkish translations
   * Fix residual package control order on other functions too
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Tue, 03 Sep 2024 15:44:32 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Tue, 03 Sep 2024 15:44:32 +0300
 
-pardus-update (0.4.0) unstable; urgency=medium
+pars-update (0.4.0) unstable; urgency=medium
 
   [ Fatih Altun ]
   * Add selectable feature to updates
@@ -178,12 +178,12 @@ pardus-update (0.4.0) unstable; urgency=medium
   [ Hugo Carvalho ]
   * Update Portuguese translations
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Tue, 06 Aug 2024 14:18:48 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Tue, 06 Aug 2024 14:18:48 +0300
 
-pardus-update (0.3.0) unstable; urgency=medium
+pars-update (0.3.0) unstable; urgency=medium
 
   [ bariscodefx ]
-  * ported xfce about dialog fix from pardus-software
+  * ported xfce about dialog fix from pars-software
   * oops, fixed wrong variable name
 
   [ Hugo Carvalho ]
@@ -192,7 +192,7 @@ pardus-update (0.3.0) unstable; urgency=medium
 
   [ Fatih Altun ]
   * Add missing tolerance to required size label on ui too
-  * Update indicator sys_status sensitive as always true for pardus gnome 23
+  * Update indicator sys_status sensitive as always true for pars gnome 23
   * Add window present to show app
   * Fix translators structure, fixes #5
   * Update pot file
@@ -235,13 +235,13 @@ pardus-update (0.3.0) unstable; urgency=medium
   [ Hugo Carvalho ]
   * Update Portuguese translations
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Tue, 16 Jul 2024 12:40:06 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Tue, 16 Jul 2024 12:40:06 +0300
 
-pardus-update (0.2.0) unstable; urgency=medium
+pars-update (0.2.0) unstable; urgency=medium
 
   [ Fatih Altun ]
   * Update .gitignore
-  * Update pardus-update-uptodate icon
+  * Update pars-update-uptodate icon
   * Add systemd offline dist upgrade
   * Reformat Code
   * Update dpkg monitoring as only status file
@@ -289,9 +289,9 @@ pardus-update (0.2.0) unstable; urgency=medium
   * Fix set updateinfo page on upgrade ok clicked
   * Add apt keep list for dist upgrade
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Tue, 24 Oct 2023 15:42:42 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Tue, 24 Oct 2023 15:42:42 +0300
 
-pardus-update (0.1.4) unstable; urgency=medium
+pars-update (0.1.4) unstable; urgency=medium
 
   [ Hugo Carvalho ]
   * Add Portuguese translation
@@ -308,33 +308,33 @@ pardus-update (0.1.4) unstable; urgency=medium
   * Fix typo
   * Fix about_dialog menu popover
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Fri, 22 Sep 2023 17:30:13 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Fri, 22 Sep 2023 17:30:13 +0300
 
-pardus-update (0.1.3) unstable; urgency=medium
+pars-update (0.1.3) unstable; urgency=medium
 
   * Add ellipsize to update package name
   * Update default width and height of main window
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Fri, 25 Aug 2023 02:53:00 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Fri, 25 Aug 2023 02:53:00 +0300
 
-pardus-update (0.1.2) unstable; urgency=medium
+pars-update (0.1.2) unstable; urgency=medium
 
   * Fix vte display problem from init tray
   * Fix typo
   * Add monitoring for dpkg dir too
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Tue, 22 Aug 2023 15:51:44 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Tue, 22 Aug 2023 15:51:44 +0300
 
-pardus-update (0.1.1) unstable; urgency=medium
+pars-update (0.1.1) unstable; urgency=medium
 
   * Fix update of indicator labels after upgrade
   * Add monitoring controls for apt lists directory
   * Fix copyright opacity
   * Update about dialog icon and window position
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Tue, 22 Aug 2023 02:42:00 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Tue, 22 Aug 2023 02:42:00 +0300
 
-pardus-update (0.1.0) unstable; urgency=medium
+pars-update (0.1.0) unstable; urgency=medium
 
   * Initial Commit
   * Fix typo
@@ -361,4 +361,4 @@ pardus-update (0.1.0) unstable; urgency=medium
   * Update pot file
   * Update Turkish translations
 
- -- Fatih Altun <fatih.altun@pardus.org.tr>  Sun, 20 Aug 2023 16:29:11 +0300
+ -- Fatih Altun <fatih.altun@parslinux.org>  Sun, 20 Aug 2023 16:29:11 +0300
