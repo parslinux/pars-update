@@ -1279,20 +1279,27 @@ class MainWindow(object):
 
     def control_groups(self):
         try:
-            self.user_groups = [g.gr_name for g in grp.getgrall() if self.UserSettings.user_name in g.gr_mem]
+            user = self.UserSettings.user_name
+            user_groups = [g.gr_name for g in grp.getgrall() if user in g.gr_mem]
+            import pwd
+            try:
+                user_pw = pwd.getpwnam(user)
+                primary_gr = grp.getgrgid(user_pw.pw_gid)
+                if primary_gr.gr_name not in user_groups:
+                    user_groups.append(primary_gr.gr_name)
+            except Exception:
+                pass
+            self.user_groups = user_groups
         except Exception as e:
             print("control_groups: {}".format(e))
             self.user_groups = []
 
-        if self.user_groups:
-            self.ui_passwordless_button.set_visible(True)
-            if "pars-update" in self.user_groups:
-                self.ui_passwordless_button_label.set_label(_("Disable Passwordless Usage"))
-            else:
-                self.ui_passwordless_button_label.set_label(_("Enable Passwordless Usage"))
-            self.ui_passwordless_button.set_sensitive(True)
+        self.ui_passwordless_button.set_visible(True)
+        if "pars-update" in self.user_groups:
+            self.ui_passwordless_button_label.set_label(_("Disable Passwordless Usage"))
         else:
-            self.ui_passwordless_button.set_visible(False)
+            self.ui_passwordless_button_label.set_label(_("Enable Passwordless Usage"))
+        self.ui_passwordless_button.set_sensitive(True)
 
     def on_ui_passwordless_button_clicked(self, button):
         self.grouperrormessage = ""
@@ -1494,9 +1501,14 @@ class MainWindow(object):
         self.ui_dpkgconfigurefix_box.set_visible(True)
         self.ui_dpkgconfigureinfo_box.set_visible(False)
         self.ui_dpkgconfigurefix_button.set_sensitive(True)
-        self.ui_dpkgconfigurefix_label.set_markup("<b>{}</b>".format(
-            _("dpkg interrupt detected. Click the 'Fix' button or\n"
-              "manually run 'sudo dpkg --configure -a' to fix the problem.")))
+        if self.Package.backend_name == "pacman":
+            self.ui_dpkgconfigurefix_label.set_markup("<b>{}</b>".format(
+                _("Pacman database lock detected (/var/lib/pacman/db.lck).\n"
+                  "Click the 'Fix' button to safely remove the lock if no other process is running.")))
+        else:
+            self.ui_dpkgconfigurefix_label.set_markup("<b>{}</b>".format(
+                _("dpkg interrupt detected. Click the 'Fix' button or\n"
+                  "manually run 'sudo dpkg --configure -a' to fix the problem.")))
         self.on_ui_dpkgconfigurefix_button_clicked(None)
 
     def on_ui_dpkgconfigurefix_button_clicked(self, button):
@@ -2315,10 +2327,16 @@ class MainWindow(object):
                 self.ui_main_stack.set_visible_child_name("clean")
             else:
                 self.ui_main_stack.set_visible_child_name("updateinfo")
-        elif status == 2816:  # dpkg lock error
-            self.ui_upgradeinfo_label.set_markup("<span color='red'><b>{}</b></span>".format(
-                _("Only one software management tool is allowed to run at the same time.\n"
-                  "Please close the other application e.g. 'Update Manager', 'aptitude' or 'Synaptic' first.")))
+        elif status == 2816:  # lock error (11 * 256)
+            if self.Package.backend_name == "pacman":
+                self.ui_upgradeinfo_label.set_markup("<span color='red'><b>{}</b></span>".format(
+                    _("Pacman database lock detected (/var/lib/pacman/db.lck).\n"
+                      "If no other package manager is running, click the 'Fix' button to remove the lock.")))
+                GLib.idle_add(self.ui_upgradeinfofixdpkg_button.set_visible, True)
+            else:
+                self.ui_upgradeinfo_label.set_markup("<span color='red'><b>{}</b></span>".format(
+                    _("Only one software management tool is allowed to run at the same time.\n"
+                      "Please close the other application e.g. 'Update Manager', 'aptitude' or 'Synaptic' first.")))
         elif status == 3072:  # dpkg interrupt error
             self.ui_upgradeinfo_label.set_markup("<span color='red'><b>{}</b></span>".format(
                 _("dpkg interrupt detected. Click the 'Fix' button or\n"

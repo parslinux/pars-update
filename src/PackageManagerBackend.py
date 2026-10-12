@@ -530,19 +530,21 @@ class PacmanBackend(object):
             try:
                 with open(mirrorlist, "r", encoding="utf-8") as f:
                     for line in f:
-                        line = line.strip()
-                        if line.startswith("Server"):
-                            parts = line.split("=", 1)
+                        stripped = line.strip()
+                        if stripped.startswith("Server") or stripped.startswith("#Server"):
+                            disabled = stripped.startswith("#")
+                            uncommented = stripped.lstrip("# \t")
+                            parts = uncommented.split("=", 1)
                             if len(parts) == 2:
                                 url = parts[1].strip()
                                 repos.setdefault(url, []).append({
                                     "file": mirrorlist,
-                                    "comps": ["core", "extra", "multilib"],
-                                    "disabled": False,
-                                    "dist": "arch",
-                                    "type": "binary",
+                                    "comps": [],
+                                    "disabled": disabled,
+                                    "dist": "",
+                                    "type": "Server",
                                     "uri": url,
-                                    "line": line,
+                                    "line": stripped,
                                     "architectures": ["x86_64"]
                                 })
             except Exception as e:

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Sep 18 14:53:00 2020
-
-@author: fatih
+Package manager repository/sources actions executed via pkexec for Pars Update.
+Supports Debian sources.list and Arch Linux mirrorlist.
 """
+
 import locale
 import os
 import re
+import shutil
 import subprocess
 import sys
 from datetime import datetime
@@ -26,45 +27,91 @@ locale.textdomain('pars-update')
 
 def main():
     def subupdate():
-        subprocess.call(["apt", "update"],
-                        env={**os.environ, 'DEBIAN_FRONTEND': 'noninteractive'})
+        if shutil.which("pacman") and aptsourceslist is None:
+            subprocess.call(["pacman", "-Sy"],
+                            env={**os.environ, 'LC_ALL': 'C'})
+        else:
+            subprocess.call(["apt", "update"],
+                            env={**os.environ, 'DEBIAN_FRONTEND': 'noninteractive'})
 
     def aptclean():
-        subprocess.call(["apt", "clean"],
-                        env={**os.environ, 'DEBIAN_FRONTEND': 'noninteractive'})
+        if shutil.which("pacman") and aptsourceslist is None:
+            subprocess.call(["pacman", "-Sc", "--noconfirm"],
+                            env={**os.environ, 'LC_ALL': 'C'})
+        else:
+            subprocess.call(["apt", "clean"],
+                            env={**os.environ, 'DEBIAN_FRONTEND': 'noninteractive'})
 
     def dpkgconfigure():
-        subprocess.call(["dpkg", "--configure", "-a"],
-                        env={**os.environ, 'DEBIAN_FRONTEND': 'noninteractive'})
+        if shutil.which("pacman") and aptsourceslist is None:
+            lock_path = "/var/lib/pacman/db.lck"
+            if os.path.exists(lock_path):
+                try:
+                    os.remove(lock_path)
+                    print("Pacman lock removed.")
+                except Exception as e:
+                    print(f"Error removing pacman lock: {e}", file=sys.stderr)
+        else:
+            subprocess.call(["dpkg", "--configure", "-a"],
+                            env={**os.environ, 'DEBIAN_FRONTEND': 'noninteractive'})
 
     def fixbroken():
-        subprocess.call(["apt", "install", "--fix-broken", "-yq"],
-                        env={**os.environ, 'DEBIAN_FRONTEND': 'noninteractive'})
+        if shutil.which("pacman") and aptsourceslist is None:
+            print("Fix broken is not applicable on Arch Linux.")
+        else:
+            subprocess.call(["apt", "install", "--fix-broken", "-yq"],
+                            env={**os.environ, 'DEBIAN_FRONTEND': 'noninteractive'})
 
     def set_source_state(state, line, file_path):
-
         if state not in ("0", "1"):
             print("Invalid state parameter.", file=sys.stderr)
             sys.exit(1)
 
         print("{}\n\nold: {}\n".format(file_path, line))
-        sources = aptsourceslist.SourcesList()
-        for source in sources.list:
-            try:
-                if source.line.strip() == line and source.file == file_path:
-                    source.set_enabled(state == "1")
-                    print("new: {}\n".format(source.line.strip()))
-                    break
-            except Exception as e:
-                print("{}".format(e))
-                continue
-        sources.save()
+
+        if aptsourceslist is not None and not file_path.endswith("mirrorlist"):
+            sources = aptsourceslist.SourcesList()
+            for source in sources.list:
+                try:
+                    if source.line.strip() == line and source.file == file_path:
+                        source.set_enabled(state == "1")
+                        print("new: {}\n".format(source.line.strip()))
+                        break
+                except Exception as e:
+                    print("{}".format(e))
+                    continue
+            sources.save()
+        else:
+            # Arch Linux mirrorlist or plain file handling
+            if os.path.exists(file_path):
+                try:
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        file_lines = f.readlines()
+                    target_url = line.split("=", 1)[1].strip() if "=" in line else line.strip()
+                    new_file_lines = []
+                    for l in file_lines:
+                        clean_l = l.strip()
+                        if target_url in clean_l:
+                            if state == "1":
+                                l = clean_l.lstrip("# \t") + "\n"
+                            else:
+                                if not clean_l.startswith("#"):
+                                    l = "#" + clean_l + "\n"
+                        new_file_lines.append(l)
+                    with open(file_path, "w", encoding="utf-8") as f:
+                        f.writelines(new_file_lines)
+                    print("Updated file: {}".format(file_path))
+                except Exception as e:
+                    print("Error updating file: {}".format(e), file=sys.stderr)
 
         print(_("Package Manager Cache is updating, please wait..."))
         print("")
         subupdate()
 
     def fix_sources(slist_content, fix_slistd, slistd_remove, configure_state, fixbroken_state):
+        if shutil.which("pacman") and aptsourceslist is None:
+            print("sources.list repair is not applicable for Arch Linux.", file=sys.stderr)
+            sys.exit(0)
 
         allowed_flags = {"0", "1"}
         if not (fix_slistd in allowed_flags and slistd_remove in allowed_flags and
@@ -138,7 +185,6 @@ def main():
         ]
 
         for line in str(sources_text).splitlines():
-
             line = line.strip()
             if not line or line.startswith("#"):
                 continue

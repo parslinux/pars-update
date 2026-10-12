@@ -119,8 +119,19 @@ def main():
 
     def pacman_dpkgconfigure():
         lock_path = "/var/lib/pacman/db.lck"
+        ps = subprocess.run(["pgrep", "-x", "pacman"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        if ps.returncode == 0:
+            print("Pacman is currently running in another process. Lock cannot be safely removed.", file=sys.stderr)
+            sys.exit(1)
         if os.path.exists(lock_path):
-            print("Checking pacman lock: lock exists.", file=sys.stderr)
+            try:
+                os.remove(lock_path)
+                print("Pacman database lock (/var/lib/pacman/db.lck) removed successfully.", file=sys.stdout)
+            except Exception as e:
+                print(f"Error removing pacman lock: {e}", file=sys.stderr)
+                sys.exit(1)
+        else:
+            print("No pacman lock file found. Database is ready.", file=sys.stdout)
 
     # ---------------- APT (Debian) Implementations ----------------
     def control_lock():

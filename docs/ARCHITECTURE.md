@@ -77,15 +77,18 @@ Pars Update, güvenlik ilkeleri gereği **çift katmanlı (Privilege-Separated)*
 ### 2.3 Sistem ve Ayrıcalıklı Eylemler Katmanı
 * **`SysActions.py`:**
   * `pkexec` üzerinden çağrılır.
-  * `apt update`, `apt full-upgrade`, `apt autoremove`, `dpkg --configure -a` ve `apt clean` operasyonlarını icra eder.
+  * **APT (Debian):** `apt update`, `apt full-upgrade`, `apt autoremove`, `dpkg --configure -a` ve `apt clean` operasyonlarını icra eder.
+  * **Pacman (Arch Linux):** `pacman -Syu`, `pacman -Rns $(pacman -Qdtq)`, `pacman -Sc`, ve `/var/lib/pacman/db.lck` kilit kontrol/temizleme işlemlerini yürütür.
   * Çevrimdışı güvenli güncelleme (`distupgradeoffline`) mekanizmasını başlatır.
 * **`AptSourceActions.py`:**
-  * `/etc/apt/sources.list` ve `/etc/apt/sources.list.d/` yapılandırmalarını güvenli biçimde düzenler veya varsayılanlara sıfırlar.
+  * Debian üzerinde `/etc/apt/sources.list` ve `/etc/apt/sources.list.d/` yapılandırmalarını düzenler.
+  * Arch Linux üzerinde `/etc/pacman.d/mirrorlist` aynalarını etkinleştirir/devre dışı bırakır ve `pacman -Sy` ile önbelleği yeniler.
   * Güvenlik filtresi (`is_safe_sources`): Zararlı kaynak satırlarını (ör. `trusted=yes`, `file://`) engeller.
 * **`SystemSettings.py` & `SystemSettingsWrite.py`:**
-  * `/etc/pars/pars-update.conf` sistem çapındaki yapılandırmasını yönetir.
+  * `/etc/pars/pars-update.conf` sistem çapındaki yapılandırmasını yönetir (dizin yoksa otomatik oluşturulur).
 * **`Group.py`:**
   * Kullanıcının `pars-update` grubuna eklenmesini veya çıkarılmasını sağlar (Polkit parolasız kullanım).
+  * Dağıtımdan bağımsız olarak `gpasswd`, `usermod` ve `adduser`/`deluser` araçlarını kullanır; grup yoksa `groupadd -r` ile otomatik tanımlar.
 
 ---
 

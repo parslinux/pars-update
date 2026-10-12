@@ -192,16 +192,16 @@ msgid "Package Manager Cache"
 msgstr "Paket Yöneticisi Önbelleği"
 
 #: ui/MainWindow.glade:1871
-msgid "APT Sources List"
-msgstr "APT Kaynak Listesi"
+msgid "Package Repositories"
+msgstr "Paket Depoları"
 
 #: ui/MainWindow.glade:1920 src/MainWindow.py:1285
 msgid "Enable Passwordless Usage"
 msgstr "Parolasız Kullanımı Etkinleştir"
 
 #: ui/MainWindow.glade:1980
-msgid "Cached deb packages"
-msgstr "Önbellekteki deb paketleri"
+msgid "Cached packages"
+msgstr "Önbellekteki paketler"
 
 #: ui/MainWindow.glade:2002 ui/MainWindow.glade:2121 ui/MainWindow.glade:2240
 msgid "size"
@@ -679,6 +679,20 @@ msgstr "dpkgconfigure kullanıcı isteği üzerine atlandı."
 #: src/AptSourceActions.py:124
 msgid "fixbroken skipped per user request."
 msgstr "fixbroken kullanıcı isteği üzerine atlandı."
+
+msgid ""
+"Pacman database lock detected (/var/lib/pacman/db.lck).\n"
+"Click the 'Fix' button to safely remove the lock if no other process is running."
+msgstr ""
+"Pacman veritabanı kilidi tespit edildi (/var/lib/pacman/db.lck).\n"
+"Çalışan başka bir işlem yoksa kilidi güvenle kaldırmak için 'Onar' düğmesine tıklayın."
+
+msgid ""
+"Pacman database lock detected (/var/lib/pacman/db.lck).\n"
+"If no other package manager is running, click the 'Fix' button to remove the lock."
+msgstr ""
+"Pacman veritabanı kilidi tespit edildi (/var/lib/pacman/db.lck).\n"
+"Çalışan başka bir paket yöneticisi yoksa kilidi kaldırmak için 'Onar' düğmesine tıklayın."
 
 #~ msgid "Automatic upgrade started in the background."
 #~ msgstr "Otomatik güncelleme arka planda başladı."

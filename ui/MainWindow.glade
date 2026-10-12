@@ -1867,7 +1867,7 @@
                                   <object class="GtkLabel">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
-                                    <property name="label" translatable="yes">APT Sources List</property>
+                                    <property name="label" translatable="yes">Package Repositories</property>
                                     <attributes>
                                       <attribute name="weight" value="bold"/>
                                     </attributes>
@@ -1976,7 +1976,7 @@
                                       <object class="GtkLabel">
                                         <property name="visible">True</property>
                                         <property name="can-focus">False</property>
-                                        <property name="label" translatable="yes">Cached deb packages</property>
+                                        <property name="label" translatable="yes">Cached packages</property>
                                         <property name="justify">center</property>
                                         <property name="wrap">True</property>
                                         <property name="max-width-chars">17</property>
@@ -5264,7 +5264,7 @@ Use with caution. Are you sure you want to continue?</property>
         </child>
         <child>
           <object class="GtkButton" id="ui_menudistupgrade_button">
-            <property name="visible">True</property>
+            <property name="visible">False</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
             <property name="relief">none</property>
@@ -5309,7 +5309,7 @@ Use with caution. Are you sure you want to continue?</property>
         </child>
         <child>
           <object class="GtkSeparator" id="ui_menudistupgrade_separator">
-            <property name="visible">True</property>
+            <property name="visible">False</property>
             <property name="can-focus">False</property>
           </object>
           <packing>

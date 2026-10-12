@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Feb 16 14:53:13 2022
-
-@author: fatih
+System configuration writer executed via pkexec for Pars Update.
+Ensures configuration directory exists and writes system parameters.
 """
 
+import os
 import sys
 from configparser import ConfigParser
 
@@ -16,14 +16,17 @@ def main():
     config = ConfigParser(strict=False)
 
     def write_lastupdate(timestamp):
-        config.read(configdir + configfile)
+        os.makedirs(configdir, exist_ok=True)
+        config_path = os.path.join(configdir, configfile)
+        if os.path.exists(config_path):
+            config.read(config_path)
 
         if config.has_section("Update"):
             config.set("Update", "lastupdate", timestamp)
         else:
             config['Update'] = {"lastupdate": timestamp}
 
-        with open(configdir + configfile, "w") as cf:
+        with open(config_path, "w") as cf:
             config.write(cf)
 
     def validate_timestamp(value):
