@@ -9,6 +9,7 @@ import grp
 import json
 import os
 import subprocess
+import sys
 import threading
 from datetime import datetime
 
@@ -1636,7 +1637,9 @@ class MainWindow(object):
         start_thread()
 
     def upgradables_worker_thread(self):
+        print("upgradables_worker_thread started")
         rcu = self.rcu_worker()
+        print("rcu_worker finished, to_upgrade count: {}".format(len(rcu.get("to_upgrade", []))))
         GLib.idle_add(self.on_upgradables_worker_done, rcu)
 
     def rcu_worker(self, keep_list=None):
@@ -1788,7 +1791,11 @@ class MainWindow(object):
     def start_aptupdate(self):
         if not self.upgrade_inprogress and not self.update_inprogress:
             GLib.idle_add(self.indicator.set_icon, self.icon_inprogress)
-            command = ["/usr/bin/pkexec", os.path.dirname(os.path.abspath(__file__)) + "/AutoAptUpdate.py"]
+            script_path = os.path.dirname(os.path.abspath(__file__)) + "/AutoAptUpdate.py"
+            if self.Package.backend_name == "pacman":
+                command = [sys.executable, script_path]
+            else:
+                command = ["/usr/bin/pkexec", script_path]
             self.startAptUpdateProcess(command)
             self.sources_err_count = 0
             self.sources_err_lines = ""
@@ -1822,6 +1829,7 @@ class MainWindow(object):
         else:
             if self.sources_err_count == 0:
                 upgradable = self.Package.upgradable()
+                print("set_upgradable_page_and_notify: upgradable packages = {}".format(len(upgradable) if upgradable else 0))
                 if upgradable:
                     self.control_required_changes()
                     if self.ui_main_stack.get_visible_child_name() == "spinner" or \
@@ -1895,18 +1903,22 @@ class MainWindow(object):
         return pid
 
     def onControlDistUpgradeStdout(self, source, condition):
-        if condition == GLib.IO_HUP:
+        if condition & GLib.IO_HUP:
             return False
         line = source.readline()
-        print("onControlDistUpgradeStdout: {}".format(line))
+        if not line:
+            return False
+        print("onControlDistUpgradeStdout: {}".format(line.strip()))
         self.control_distup_messages += "{}".format(line)
         return True
 
     def onControlDistUpgradeStderr(self, source, condition):
-        if condition == GLib.IO_HUP:
+        if condition & GLib.IO_HUP:
             return False
         line = source.readline()
-        print("onControlDistUpgradeStderr: {}".format(line))
+        if not line:
+            return False
+        print("onControlDistUpgradeStderr: {}".format(line.strip()))
         self.control_distup_messages += "{}".format(line)
         return True
 
@@ -2099,10 +2111,12 @@ class MainWindow(object):
         return pid
 
     def onDistUpgradeStdout(self, source, condition):
-        if condition == GLib.IO_HUP:
+        if condition & GLib.IO_HUP:
             return False
         line = "{}".format(source.readline())
-        print("onDistUpgradeStdout: {}".format(line))
+        if not line:
+            return False
+        print("onDistUpgradeStdout: {}".format(line.strip()))
 
         self.ui_distupgrade_textview.get_buffer().insert(self.ui_distupgrade_textview.get_buffer().get_end_iter(), line)
 
@@ -2113,10 +2127,12 @@ class MainWindow(object):
         return True
 
     def onDistUpgradeStderr(self, source, condition):
-        if condition == GLib.IO_HUP:
+        if condition & GLib.IO_HUP:
             return False
         line = "{}".format(source.readline())
-        print("onDistUpgradeStderr: {}".format(line))
+        if not line:
+            return False
+        print("onDistUpgradeStderr: {}".format(line.strip()))
 
         self.ui_distupgrade_textview.get_buffer().insert(self.ui_distupgrade_textview.get_buffer().get_end_iter(), line)
 
@@ -2151,21 +2167,25 @@ class MainWindow(object):
         return pid
 
     def onAptUpdateProcessStdout(self, source, condition):
-        if condition == GLib.IO_HUP:
+        if condition & GLib.IO_HUP:
             return False
         line = source.readline()
-        print("onAptUpdateProcessStdout: {}".format(line))
+        if not line:
+            return False
+        print("onAptUpdateProcessStdout: {}".format(line.strip()))
         self.sources_err_lines += line
         if "Err:" in line:
             self.sources_err_count += 1
         return True
 
     def onAptUpdateProcessStderr(self, source, condition):
-        if condition == GLib.IO_HUP:
+        if condition & GLib.IO_HUP:
             return False
         line = source.readline()
+        if not line:
+            return False
         self.sources_err_lines += line
-        print("onAptUpdateProcessStderr: {}".format(line))
+        print("onAptUpdateProcessStderr: {}".format(line.strip()))
         if "Err:" in line:
             self.sources_err_count += 1
         return True
@@ -2173,7 +2193,16 @@ class MainWindow(object):
     def onAptUpdateProcessExit(self, pid, status):
         print("onAptUpdateProcessExit: {}".format(status))
         self.Package.updatecache()
-        if status == 0:
+        exit_code = 0
+        try:
+            if hasattr(os, "waitstatus_to_exitcode"):
+                exit_code = os.waitstatus_to_exitcode(status)
+            else:
+                exit_code = os.WEXITSTATUS(status) if os.WIFEXITED(status) else status
+        except Exception:
+            exit_code = status
+
+        if exit_code == 0:
             if self.sources_err_count == 0:
                 try:
                     timestamp = int(datetime.now().timestamp())
@@ -2192,15 +2221,25 @@ class MainWindow(object):
 
                 if self.SystemSettings.config_update_interval is not None:
                     print("SystemSettings.config_update_lastupdate writed")
-                    command = ["/usr/bin/pkexec", os.path.dirname(os.path.abspath(__file__)) + "/SystemSettingsWrite.py",
-                               "write", "lastupdate", "{}".format(timestamp)]
-                    subprocess.run(command)
+                    if self.Package.backend_name != "pacman":
+                        command = ["/usr/bin/pkexec", os.path.dirname(os.path.abspath(__file__)) + "/SystemSettingsWrite.py",
+                                   "write", "lastupdate", "{}".format(timestamp)]
+                        subprocess.run(command)
             else:
                 print("There is an error in the repository connections.")
                 self.set_upgradable_page_and_notify()
                 self.ui_conerror_info_label.set_text(self.sources_err_lines)
         else:
             self.indicator.set_icon(self.icon_error)
+            print("Update process exited with non-zero code: {}".format(exit_code))
+            if self.Package.upgradable():
+                self.set_upgradable_page_and_notify()
+            else:
+                if self.sources_err_lines:
+                    self.ui_conerror_info_label.set_text(self.sources_err_lines)
+                    self.ui_main_stack.set_visible_child_name("conerror")
+                else:
+                    self.set_upgradable_page_and_notify()
 
         self.update_inprogress = False
         print("update in progress set to " + str(self.update_inprogress))
@@ -2641,17 +2680,21 @@ class MainWindow(object):
         return pid
 
     def on_group_process_stdout(self, source, condition):
-        if condition == GLib.IO_HUP:
+        if condition & GLib.IO_HUP:
             return False
         line = source.readline()
-        print("on_group_process_stdout - line: {}".format(line))
+        if not line:
+            return False
+        print("on_group_process_stdout - line: {}".format(line.strip()))
         return True
 
     def on_group_process_stderr(self, source, condition):
-        if condition == GLib.IO_HUP:
+        if condition & GLib.IO_HUP:
             return False
         line = source.readline()
-        print("on_group_process_stderr - line: {}".format(line))
+        if not line:
+            return False
+        print("on_group_process_stderr - line: {}".format(line.strip()))
         self.grouperrormessage = line
         return True
 
