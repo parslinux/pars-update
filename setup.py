@@ -22,16 +22,23 @@ def create_mo_files():
 
 
 changelog = "debian/changelog"
+version = "1.4.3"
 if os.path.exists(changelog):
-    head = open(changelog).readline()
     try:
+        head = open(changelog).readline()
         version = head.split("(")[1].split(")")[0]
-    except:
-        print("debian/changelog format is wrong for get version")
-        version = "0.0.0"
-    f = open("src/__version__", "w")
+    except Exception:
+        pass
+elif os.path.exists("src/__version__"):
+    try:
+        with open("src/__version__", "r", encoding="utf-8") as f:
+            version = f.readline().strip() or version
+    except Exception:
+        pass
+
+os.makedirs("src", exist_ok=True)
+with open("src/__version__", "w", encoding="utf-8") as f:
     f.write(version)
-    f.close()
 
 data_files = [
                  ("/usr/bin", ["pars-update"]),

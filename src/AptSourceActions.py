@@ -21,13 +21,15 @@ try:
 except ImportError:
     aptsourceslist = None
 
+from PackageManagerBackend import get_package_manager
+
 locale.bindtextdomain('pars-update', '/usr/share/locale')
 locale.textdomain('pars-update')
 
 
 def main():
     def subupdate():
-        if shutil.which("pacman") and aptsourceslist is None:
+        if get_package_manager() == "pacman":
             subprocess.call(["pacman", "-Sy"],
                             env={**os.environ, 'LC_ALL': 'C'})
         else:
@@ -35,7 +37,7 @@ def main():
                             env={**os.environ, 'DEBIAN_FRONTEND': 'noninteractive'})
 
     def aptclean():
-        if shutil.which("pacman") and aptsourceslist is None:
+        if get_package_manager() == "pacman":
             subprocess.call(["pacman", "-Sc", "--noconfirm"],
                             env={**os.environ, 'LC_ALL': 'C'})
         else:
@@ -43,20 +45,26 @@ def main():
                             env={**os.environ, 'DEBIAN_FRONTEND': 'noninteractive'})
 
     def dpkgconfigure():
-        if shutil.which("pacman") and aptsourceslist is None:
+        if get_package_manager() == "pacman":
             lock_path = "/var/lib/pacman/db.lck"
+            ps = subprocess.run(["pgrep", "-x", "pacman"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+            if ps.stdout.strip():
+                print("Pacman is actively running. Lock cannot be safely removed.", file=sys.stderr)
+                return
             if os.path.exists(lock_path):
                 try:
                     os.remove(lock_path)
-                    print("Pacman lock removed.")
+                    print("Pacman database lock (/var/lib/pacman/db.lck) removed successfully.")
                 except Exception as e:
                     print(f"Error removing pacman lock: {e}", file=sys.stderr)
+            else:
+                print("No pacman lock file found. Database is ready.")
         else:
             subprocess.call(["dpkg", "--configure", "-a"],
                             env={**os.environ, 'DEBIAN_FRONTEND': 'noninteractive'})
 
     def fixbroken():
-        if shutil.which("pacman") and aptsourceslist is None:
+        if get_package_manager() == "pacman":
             print("Fix broken is not applicable on Arch Linux.")
         else:
             subprocess.call(["apt", "install", "--fix-broken", "-yq"],
@@ -109,7 +117,7 @@ def main():
         subupdate()
 
     def fix_sources(slist_content, fix_slistd, slistd_remove, configure_state, fixbroken_state):
-        if shutil.which("pacman") and aptsourceslist is None:
+        if get_package_manager() == "pacman":
             print("sources.list repair is not applicable for Arch Linux.", file=sys.stderr)
             sys.exit(0)
 

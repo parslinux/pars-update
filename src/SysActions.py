@@ -86,7 +86,7 @@ def main():
         if valid_keeps:
             cmd.extend(["--ignore", ",".join(valid_keeps)])
 
-        result = subprocess.run(cmd, env={**os.environ, "LC_ALL": "C"})
+        result = subprocess.run(cmd)
         sys.exit(result.returncode)
 
     def pacman_removeauto():
@@ -95,7 +95,7 @@ def main():
         orphans = [p.strip() for p in res.stdout.decode("utf-8", errors="ignore").splitlines() if p.strip()]
         if orphans:
             cmd = ["pacman", "-Rns", "--noconfirm"] + orphans
-            result = subprocess.run(cmd, env={**os.environ, "LC_ALL": "C"})
+            result = subprocess.run(cmd)
             sys.exit(result.returncode)
         else:
             print("No orphaned packages to remove.", file=sys.stdout)

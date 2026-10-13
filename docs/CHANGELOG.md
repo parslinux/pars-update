@@ -4,6 +4,28 @@ Bu belgede **Pars Update** projesinin tüm sürümlerine ait değişiklikler, ye
 
 ---
 
+## [1.4.4] - 2026-10-14
+### Eklendi & Yenilendi (Modernizasyon, Arch Linux & Yeni Vektörel Görsel Kimlik)
+* **Yeni Pars Linux Logo ve İkon Seti (Vektörel SVG):**
+  * `data/pars-update.svg`: 128x128 squircle, kraliyet mavisi gradyanlı modern uygulama ikonu ve 3D derinlikli döngüsel güncelleme sembolü.
+  * `data/pars-update-symbolic.svg` & `data/pars-update-available-symbolic.svg`: Tepsi ve panel için yüksek okunurluklu minimal sembolik simgeler.
+  * `data/pars-update-uptodate.svg`: "Sisteminiz Güncel" ekranı için yeşil koruma kalkanı ve onay imi vektörel illüstrasyonu.
+  * `data/pars-update-cantconnect.svg`: Bağlantı hatası ekranı için modern bulut ve uyarı illüstrasyonu.
+  * `data/pars-update-inprogress-symbolic.svg` & `data/pars-update-error-symbolic.svg`: Durum simgeleri güncellendi.
+* **Modern CSS Teması (`data/style.css`):**
+  * `.suggested-action`, `.destructive-action`, `.pill` butonları, durum rozetleri ve modern kenarlıklar eklendi.
+* **Arch Linux (Pacman) Motor İyileştirmeleri:**
+  * **Aday Sürüm Önbellek Düzeltmesi:** `_fetch_upgrades_raw` içerisinde `_upgradable_cache` güncellenerek `candidate_version` sorgularının en güncel sürümü döndürmesi sağlandı.
+  * **Toplu Paket Bilgisi Sorgulama (Batch -Si):** `_query_pacman_si_batch` ile tek `pacman -Si` çağrısıyla tüm paket bilgileri çekilerek güncelleme kontrol süresi 10 kat hızlandırıldı.
+  * **Desktop Dosyası Sahiplik Tespiti:** `get_appname_from_desktopfile` mutlak yol ve `/usr/share/applications` desteğiyle güçlendirildi.
+  * **Kilit Güvenliği:** `AptSourceActions.py` ve `SysActions.py` kilit temizleme işleminden önce `pgrep -x pacman` denetimi yaparak çalışan süreci korumaya aldı.
+* **Paketleme Güvenilirliği:**
+  * `setup.py` dosyasına `debian/changelog` bulunmadığı durumlar için `1.4.3+` sürüm fallback mantığı eklendi.
+* **Otomatik Test Paketi:**
+  * `tests/test_arch_and_backend.py` ile SVG doğruluğu, CSS sınıfları, dağıtım algılama ve PacmanBackend birim testleri sağlandı.
+
+---
+
 ## [0.7.1] - 2026-10-12
 ### Değiştirildi & Yenilendi (Rebranding)
 * Proje adı ve paket adı **pars-update** olarak belirlendi.

@@ -159,6 +159,60 @@ class PacmanBackend(object):
             return False, msg
         return True, ""
 
+    def _query_pacman_si_batch(self, packagenames):
+        """Batch queries pacman -Si for multiple packages to eliminate subprocess overhead."""
+        needed = [p for p in packagenames if p and p not in self._pkg_info_cache]
+        if not needed:
+            return
+
+        cmd = ["pacman", "-Si"] + needed
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                             env={**os.environ, "LC_ALL": "C"})
+        if res.returncode == 0:
+            raw_text = res.stdout.decode("utf-8", errors="ignore").strip()
+            sections = raw_text.split("\n\n")
+            for sec in sections:
+                info = {
+                    "name": "",
+                    "version": "",
+                    "description": "",
+                    "architecture": "",
+                    "url": "",
+                    "download_size": 0,
+                    "installed_size": 0,
+                    "packager": "",
+                    "repository": "",
+                    "depends": [],
+                }
+                for line in sec.splitlines():
+                    if ":" not in line:
+                        continue
+                    k, v = line.split(":", 1)
+                    k = k.strip()
+                    v = v.strip()
+                    if k == "Name":
+                        info["name"] = v
+                    elif k == "Version":
+                        info["version"] = v
+                    elif k == "Description":
+                        info["description"] = v
+                    elif k == "Architecture":
+                        info["architecture"] = v
+                    elif k == "URL":
+                        info["url"] = v
+                    elif k == "Download Size":
+                        info["download_size"] = parse_pacman_size_str(v)
+                    elif k == "Installed Size":
+                        info["installed_size"] = parse_pacman_size_str(v)
+                    elif k == "Packager":
+                        info["packager"] = v
+                    elif k == "Repository":
+                        info["repository"] = v
+                    elif k == "Depends On":
+                        info["depends"] = [d for d in v.split() if d and d != "None"]
+                if info["name"]:
+                    self._pkg_info_cache[info["name"]] = info
+
     def _query_pacman_si(self, packagename):
         """Queries pacman -Si for a package with in-memory caching."""
         if packagename in self._pkg_info_cache:
@@ -314,6 +368,7 @@ class PacmanBackend(object):
                             old_ver = parts[1]
                             new_ver = parts[3]
                             updates[name] = {"name": name, "old_version": old_ver, "new_version": new_ver}
+                self._upgradable_cache = updates
                 return updates
 
         # Fallback to pacman -Qu
@@ -335,6 +390,7 @@ class PacmanBackend(object):
                         name = parts[0]
                         updates[name] = {"name": name, "old_version": "", "new_version": parts[1] if len(parts) > 1 else ""}
 
+        self._upgradable_cache = updates
         return updates
 
     def upgradable(self):
@@ -388,11 +444,16 @@ class PacmanBackend(object):
                 to_keep.append(pkg)
             else:
                 to_upgrade.append(pkg)
-                info = self._query_pacman_si(pkg)
-                d_sz = info.get("download_size", 0)
-                i_sz = info.get("installed_size", 0)
-                download_size += d_sz
-                install_size += i_sz
+
+        # Batch query for speed
+        self._query_pacman_si_batch(to_upgrade)
+
+        for pkg in to_upgrade:
+            info = self._query_pacman_si(pkg)
+            d_sz = info.get("download_size", 0)
+            i_sz = info.get("installed_size", 0)
+            download_size += d_sz
+            install_size += i_sz
 
         changes_available = bool(to_upgrade or to_install or to_delete)
         cache_error = False
@@ -438,7 +499,14 @@ class PacmanBackend(object):
 
     def get_appname_from_desktopfile(self, desktopname):
         """Finds which package owns a desktop file using pacman -Qo."""
-        for target in [desktopname, os.path.basename(desktopname)]:
+        candidates = [desktopname]
+        if not os.path.isabs(desktopname):
+            candidates.append(os.path.join("/usr/share/applications", desktopname))
+        candidates.append(os.path.join("/usr/share/applications", os.path.basename(desktopname)))
+
+        for target in candidates:
+            if not os.path.exists(target):
+                continue
             res = subprocess.run(["pacman", "-Qo", target], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                  env={**os.environ, "LC_ALL": "C"})
             if res.returncode == 0:
