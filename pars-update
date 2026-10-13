@@ -1,6 +1,16 @@
 #!/usr/bin/python3
+# -*- coding: utf-8 -*-
 
+import os
 import sys
-sys.path.insert(0, '/usr/share/pars/pars-update/src/')
+
+# Support running in-place from repository as well as installed /usr/share path
+local_src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src")
+if os.path.isdir(local_src):
+    sys.path.insert(0, local_src)
+sys.path.insert(1, "/usr/share/pars/pars-update/src")
+
 import Main
 
+if __name__ == "__main__":
+    sys.exit(Main.main())

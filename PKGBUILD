@@ -9,6 +9,9 @@ license=('GPL-3.0-or-later')
 depends=(
     'python'
     'python-gobject'
+    'gtk4'
+    'libadwaita'
+    'vte4'
     'gtk3'
     'libnotify'
     'libsoup'
