@@ -52,6 +52,9 @@ sudo pacman -S --needed \
     python \
     python-setuptools \
     python-gobject \
+    gtk4 \
+    libadwaita \
+    vte4 \
     gtk3 \
     libnotify \
     libsoup \
@@ -70,6 +73,9 @@ sudo apt install -y \
     python3-apt \
     python3-distro \
     gir1.2-glib-2.0 \
+    gir1.2-adw-1 \
+    gir1.2-gtk-4.0 \
+    gir1.2-vte-3.91 \
     gir1.2-gtk-3.0 \
     gir1.2-notify-0.7 \
     gir1.2-soup-2.4 \
@@ -81,21 +87,22 @@ sudo apt install -y \
 
 ---
 
-## 3. Kaynaktan Çalıştırma (Geliştirici Modu)
+## 4. Kaynaktan Çalıştırma (Geliştirici Modu)
 
-Uygulama kaynak kodunu klonladıktan sonra sisteme kurmadan doğrudan test edebilirsiniz:
+Uygulama kaynak kodunu sisteme kurmadan doğrudan test edebilirsiniz:
 
 ```bash
-cd /home/can/Masaüstü/projeler/mcsm/masaüstü/inceleme_düzenleme/upteda
+# Modern GTK4 / Libadwaita arayüzü ile çalıştırma:
+./pars-update
 
-# Normal pencere modunda çalıştırma:
-python3 src/Main.py
+# Arka planda güncelleme denetimi (bildirimli):
+./pars-update --check
 
-# Sistem tepsisi (tray) modunda arka planda başlatma:
-python3 src/Main.py --tray
+# Klasik GTK3 arayüzü ile çalıştırma:
+./pars-update --gtk3
 
-# Doğrudan güncelleme sayfasına gitme:
-python3 src/Main.py --page updateinfo
+# Doğrudan belirli bir sayfayı açma:
+./pars-update --page updates
 ```
 
 ---

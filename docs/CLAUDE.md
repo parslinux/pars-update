@@ -6,51 +6,56 @@ Bu belge, **Pars Update (`pars-update`)** projesinde kod yazarken, hata ayıklar
 
 ## 1. Proje Genel Bakışı
 * **Proje Adı:** Pars Update (`pars-update`)
-* **Amaç:** Debian tabanlı sistemler ve Pars Linux için kullanıcı dostu, güvenli ve hafif GTK3 tabanlı sistem güncelleme yöneticisi.
-* **Ana Teknolojiler:** Python 3, PyGObject (GTK+ 3, GLib, Gio), python3-apt, Polkit (pkexec), Systemd, Gettext.
+* **Amaç:** Pars Linux, Arch Linux ve Debian tabanlı sistemler için kullanıcı dostu, güvenli ve hafif GTK4 / Libadwaita tabanlı sistem güncelleme yöneticisi (GTK3 fallback destekli).
+* **Ana Teknolojiler:** Python 3, PyGObject (GTK4, Libadwaita, GTK+ 3, GLib, Gio), Pacman & APT arka uçları, Polkit (pkexec), Systemd, Gettext.
 * **Uygulama Kimliği:** `org.pars.update`
 
 ---
 
 ## 2. Dizin Yapısı
 * `src/`: Python kaynak kodları.
-  * `Main.py`: Uygulamanın giriş noktası (`Gtk.Application`).
-  * `MainWindow.py`: Ana pencere mantığı, menüler, sistem tepsisi (AppIndicator) ve sinyal işleyicileri.
+  * `Main.py`: Giriş noktası; GTK4/Libadwaita (`MainAdw.py`) ve GTK3 (`MainWindow.py`) çalışma zamanı seçimi.
+  * `MainAdw.py`: Modern `Adw.Application` ana süreç yöneticisi.
+  * `core/`: Arayüzden bağımsız çekirdek servis katmanı (`UpdateEngine`, `ConfigManager`, `NotificationManager`, `TerminalRunner`).
+  * `ui/`: Modern Libadwaita arayüz bileşenleri (`MainWindowAdw.py`, `PreferencesAdw.py`).
+  * `PackageManagerBackend.py`: Çoklu dağıtım paket motoru (`PacmanBackend`).
+  * `Package.py`: APT önbelleği ve paket durum sorguları köprüsü.
+  * `MainWindow.py`: Klasik GTK3 ana penceresi (yedek fallback).
   * `SysActions.py`: Polkit üzerinden root haklarıyla çalışan sistem eylemleri (upgrade, autoremove, cache clean vb.).
-  * `AptSourceActions.py`: `/etc/apt/sources.list` düzenleme ve onarım eylemleri (root).
+  * `AptSourceActions.py`: `/etc/apt/sources.list` ve `/etc/pacman.d/mirrorlist` düzenleme eylemleri (root).
   * `SystemSettings.py` & `SystemSettingsWrite.py`: `/etc/pars/pars-update.conf` sistem ayarları.
-  * `UserSettings.py`: `~/.config/pars/pars-update/settings.ini` kullanıcı ayarları.
+  * `UserSettings.py`: `~/.config/pars/pars-update.json` kullanıcı ayarları.
   * `Group.py`: Kullanıcıyı `pars-update` grubuna ekleme/çıkarma (parolasız kullanım).
-  * `Package.py`: APT önbelleği ve paket durum sorguları.
   * `RepoDistControl.py`: Yeni dağıtım sürümü kontrolü.
   * `Utils.py`: Masaüstü ortamı tespiti ve yardımcı fonksiyonlar.
-* `ui/`: Glade ile tasarlanmış XML arayüz tanımları (`MainWindow.glade`).
-* `data/`: Simgeler, desktop dosyaları, Polkit kural ve yetki dosyaları, systemd servisleri.
-* `debian/`: Debian paketleme yapılandırması (`control`, `rules`, `changelog`, `postinst`).
+* `ui/`: Glade ile tasarlanmış eski XML arayüz tanımları (`MainWindow.glade`).
+* `data/`: Vektörel SVG simgeler, desktop dosyaları, Polkit kural ve yetki dosyaları, systemd servisleri.
+* `debian/`: Debian paketleme yapılandırması (`control`, `rules`, `changelog`).
 * `po/`: Çok dilli gettext çeviri dosyaları (`tr.po`, `pt.po`, `pars-update.pot`).
+* `tests/`: Otomatik birim ve entegrasyon testleri (`test_arch_and_backend.py`, `test_core_and_adw.py`).
 * `docs/`: Mimari, güvenlik, kurulum ve geliştirme dokümantasyonu.
 
 ---
 
 ## 3. Temel Geliştirme Komutları
 
-### Bağımlılıkları Yükleme (Debian / Pars)
-```bash
-sudo apt install gir1.2-glib-2.0 gir1.2-gtk-3.0 gir1.2-notify-0.7 \
-    gir1.2-soup-2.4 gir1.2-vte-2.91 gir1.2-ayatanaappindicator3-0.1 \
-    python3-apt python3-distro gettext
-```
-
 ### Kaynaktan Çalıştırma
 ```bash
-python3 src/Main.py
-# veya tepsi (tray) modunda:
-python3 src/Main.py --tray
+# Modern Libadwaita (GTK4):
+./pars-update
+
+# Klasik GTK3 modu:
+./pars-update --gtk3
+```
+
+### Testleri Çalıştırma
+```bash
+python3 -m unittest discover tests
 ```
 
 ### Sözdizimi ve Derleme Kontrolü
 ```bash
-python3 -m py_compile src/*.py pars-update setup.py
+python3 -m py_compile src/*.py src/core/*.py src/ui/*.py pars-update setup.py
 ```
 
 ### Çevirileri Güncelleme

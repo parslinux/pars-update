@@ -17,8 +17,8 @@ Pars Update, **SemVer 2.0.0** (`MAJOR.MINOR.PATCH`) standardını takip eder:
 
 Projede sürüm numarası **tek bir kaynaktan (Single Source of Truth)** yönetilir:
 1. Kaynak dosya: [debian/changelog](file:///home/can/Masaüstü/projeler/mcsm/masaüstü/inceleme_düzenleme/upteda/debian/changelog)
-2. [setup.py](file:///home/can/Masaüstü/projeler/mcsm/masaüstü/inceleme_düzenleme/upteda/setup.py), derleme sırasında `debian/changelog` dosyasının ilk satırını ayrıştırır (örneğin: `pars-update (0.7.1) ...` -> `0.7.1`).
-3. Elde edilen sürüm `src/__version__` dosyasına yazılır ve `MainWindow.py` tarafından "Hakkında" penceresinde gösterilir.
+2. [setup.py](file:///home/can/Masaüstü/projeler/mcsm/masaüstü/inceleme_düzenleme/upteda/setup.py), derleme sırasında `debian/changelog` dosyasının ilk satırını ayrıştırır (örneğin: `pars-update (1.4.4) ...` -> `1.4.4`). Bulunamazsa `src/__version__` dosyasından okur.
+3. Elde edilen sürüm `src/__version__` dosyasına yazılır ve `MainWindowAdw.py` / `MainWindow.py` tarafından "Hakkında" penceresinde gösterilir.
 
 ---
 
@@ -27,21 +27,21 @@ Projede sürüm numarası **tek bir kaynaktan (Single Source of Truth)** yöneti
 1. **Changelog Güncellemesi:**
    `debian/changelog` dosyasının en üstüne yeni sürüm kaydını ekleyin:
    ```debian
-   pars-update (0.7.2) unstable; urgency=medium
+   pars-update (1.4.4) unstable; urgency=medium
 
      * Yeni özellik veya hata düzeltme açıklaması
 
-    -- Geliştirici Adı <email@alanadi.org>  Pzt, 12 Eki 2026 12:00:00 +0300
+    -- Pars Linux Team <dev@parslinux.org>  Çrş, 14 Eki 2026 02:00:00 +0300
    ```
 2. **Değişiklik Günlüğü:**
-   [CHANGELOG.md](file:///home/can/Masaüstü/projeler/mcsm/masaüstü/inceleme_düzenleme/upteda/CHANGELOG.md) içerisine yeni sürüme ait özet maddeleri ekleyin.
+   [CHANGELOG.md](file:///home/can/Masaüstü/projeler/mcsm/masaüstü/inceleme_düzenleme/upteda/docs/CHANGELOG.md) içerisine yeni sürüme ait özet maddeleri ekleyin.
 3. **Çeviriler:**
    `bash update-translations.sh` çalıştırarak en güncel dizgeleri derleyin.
-4. **Sözdizimi Kontrolü:**
-   `python3 -m py_compile src/*.py pars-update setup.py` komutuyla hatasızlığı onaylayın.
+4. **Testleri Çalıştırma:**
+   `python3 -m unittest discover tests` komutuyla 17 birim/entegrasyon testinin geçtiğini doğrulayın.
 5. **Git Etiketi:**
    ```bash
    git add .
-   git commit -m "chore(release): v0.7.2"
-   git tag -a v0.7.2 -m "Release v0.7.2"
+   git commit -m "chore(release): v1.4.4"
+   git tag -a v1.4.4 -m "Release v1.4.4"
    ```

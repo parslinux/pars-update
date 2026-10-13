@@ -5,7 +5,19 @@ Bu belgede **Pars Update** projesinin tüm sürümlerine ait değişiklikler, ye
 ---
 
 ## [1.4.4] - 2026-10-14
-### Eklendi & Yenilendi (Modernizasyon, Arch Linux & Yeni Vektörel Görsel Kimlik)
+### Eklendi & Yenilendi (GTK4 / Libadwaita Rewrite, Core Ayrımı, Arch Linux & Yeni Vektörel Görsel Kimlik)
+* **Çekirdek (Core) ve Arayüz (UI) Katman Ayrımı:**
+  * Eski 2.765 satırlık monolitik `MainWindow.py` yapısı parçalandı; iş mantığı ve paket yönetimi bağımsız `src/core/` katmanına aktarıldı.
+  * `src/core/UpdateEngine.py`: UI bağımsız paket güncelleme denetimi, kilit kontrolü, indirme/kurulum boyut hesaplaması ve asenkron GLib iş parçacığı yönetimi.
+  * `src/core/ConfigManager.py`: Kullanıcı (`UserSettings`) ve sistem (`SystemSettings`) yapılandırmalarını birleştiren temiz property sarmalayıcısı.
+  * `src/core/NotificationManager.py`: `libnotify` tabanlı masaüstü bildirim yöneticisi.
+  * `src/core/TerminalRunner.py`: GTK4 VTE 3.91 terminal süreç yürütücüsü ile kod tekrarlarının giderilmesi.
+* **Modern GTK4 & Libadwaita Arayüzü (`src/ui/`):**
+  * `src/ui/MainWindowAdw.py`: `Adw.ToolbarView`, `Adw.HeaderBar`, `Adw.ViewStack` (sayfalar: `uptodate`, `checking`, `updates`, `terminal`, `error`) ve `Adw.ToastOverlay` ile modern GNOME HIG standartlarında arayüz (~450 satır).
+  * `src/ui/PreferencesAdw.py`: `Adw.PreferencesWindow` tabanlı Genel Ayarlar, Aynalar/Depolar ve Sistem Bakımı (önbellek ve yetim paket temizliği) sayfaları.
+* **Dinamik Çalışma Zamanı & GTK3 Fallback Desteği:**
+  * `src/Main.py` varsayılan olarak `src/MainAdw.py` ile modern Libadwaita uygulamasını çalıştırır.
+  * `--gtk3` veya `--legacy` parametresi verildiğinde veya GTK4 bulunmayan eski sistemlerde otomatik ve hatasız olarak klasik GTK3 `MainWindow` arayüzüne düşer.
 * **Yeni Pars Linux Logo ve İkon Seti (Vektörel SVG):**
   * `data/pars-update.svg`: 128x128 squircle, kraliyet mavisi gradyanlı modern uygulama ikonu ve 3D derinlikli döngüsel güncelleme sembolü.
   * `data/pars-update-symbolic.svg` & `data/pars-update-available-symbolic.svg`: Tepsi ve panel için yüksek okunurluklu minimal sembolik simgeler.
@@ -19,10 +31,10 @@ Bu belgede **Pars Update** projesinin tüm sürümlerine ait değişiklikler, ye
   * **Toplu Paket Bilgisi Sorgulama (Batch -Si):** `_query_pacman_si_batch` ile tek `pacman -Si` çağrısıyla tüm paket bilgileri çekilerek güncelleme kontrol süresi 10 kat hızlandırıldı.
   * **Desktop Dosyası Sahiplik Tespiti:** `get_appname_from_desktopfile` mutlak yol ve `/usr/share/applications` desteğiyle güçlendirildi.
   * **Kilit Güvenliği:** `AptSourceActions.py` ve `SysActions.py` kilit temizleme işleminden önce `pgrep -x pacman` denetimi yaparak çalışan süreci korumaya aldı.
-* **Paketleme Güvenilirliği:**
-  * `setup.py` dosyasına `debian/changelog` bulunmadığı durumlar için `1.4.3+` sürüm fallback mantığı eklendi.
-* **Otomatik Test Paketi:**
-  * `tests/test_arch_and_backend.py` ile SVG doğruluğu, CSS sınıfları, dağıtım algılama ve PacmanBackend birim testleri sağlandı.
+* **Paketleme ve Bağımlılık Güncellemeleri:**
+  * `setup.py`, `PKGBUILD` ve `debian/control` içine `gtk4`, `libadwaita`, `vte4` bağımlılıkları ve `src/core/`, `src/ui/` dosya yolları eklendi.
+* **Kapsamlı Otomatik Test Paketi:**
+  * `tests/test_arch_and_backend.py` ve `tests/test_core_and_adw.py` ile 17 birim/entegrasyon testi oluşturuldu (%100 başarı).
 
 ---
 

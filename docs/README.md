@@ -6,21 +6,25 @@
 
 ## 🌟 Temel Özellikler
 
-* **Çift Paket Yöneticisi Desteği:** Arch Linux (`pacman`) ve Debian (`apt`) sistemlerini otomatik algılayıp yerel araçlarıyla çalışma.
-* **Modern ve Sade Arayüz:** GTK+ 3 ve VTE terminal entegrasyonu ile canlı güncelleme çıktıları.
-* **Sistem Tepsisi (Tray) Bildirimi:** Ayatana AppIndicator ile sistem durumunu ve bekleyen güncelleme sayısını arka plandan takip etme.
+* **Modern Libadwaita & GTK4 Arayüzü:** GNOME HIG standartlarında akıcı, zarif ve modern arayüz (`Adw.ApplicationWindow`, `Adw.PreferencesWindow`, `Adw.ToastOverlay`).
+* **Çekirdek & Arayüz Ayrımı (Decoupled Core):** İş mantığı ve paket yönetim fonksiyonları bağımsız `src/core` katmanında yürütülür; arayüzden bağımsız test edilebilir.
+* **Geriye Dönük Uyumluluk (GTK3 Fallback):** Eski sistemler ve özel tercihler için `--gtk3` parametresiyle klasik arayüz desteği korunur.
+* **Çift Paket Yöneticisi Desteği:** Arch Linux (`pacman`, `checkupdates`) ve Debian (`apt`) sistemlerini otomatik algılayıp yerel araçlarıyla en yüksek hızda çalışma.
+* **Toplu Sorgulama Performansı:** Arch Linux'ta tek `pacman -Si` çağrısıyla tüm paket boyut ve bilgileri anında hesaplanır.
+* **VTE Terminal Entegrasyonu:** Güncelleme işlemleri sırasında terminal çıktılarını canlı ve renkli olarak kullanıcıya sunar.
+* **Sistem Tepsisi & Bildirimler:** Yeni güncellemeler ve tamamlanan işlemler için masaüstü bildirimleri (`Notify`).
 * **Güvenli Çevrimdışı Güncelleme:** Systemd `system-update.target` ve Plymouth açılış ekranı üzerinden oturumu riske atmadan güvenli yükseltme.
 * **Yetki Ayrımı (Polkit):** GUI süreci yetkisiz çalışırken, paket işlemleri Polkit üzerinden güvenli şekilde yürütülür.
 * **Parolasız Güncelleme:** İsteğe bağlı `pars-update` grubu ile her güncellemede parola girmeden işlem yapabilme.
-* **Önbellek & Artık Paket Temizliği:** İndirilen paket önbelleklerini ve yetim (orphan) bağımlılıkları tek tıkla temizleme.
-* **Kaynak Listesi Onarımı:** Bozuk kaynak listesi girdilerini tespit edip yönetebilme.
+* **Önbellek & Artık Paket Temizliği:** İndirilen paket arşivlerini (`pacman -Sc` / `apt clean`) ve yetim bağımlılıkları tek tıkla temizleme.
+* **Yansı / Depo Yönetimi:** Aktif yansı listelerini (`mirrorlist` / `sources.list`) kolayca etkinleştirip devre dışı bırakabilme.
 * **Seçilebilir Güncellemeler:** Kullanıcının yalnızca istediği paketleri seçerek güncelleyebilmesi.
 
 ---
 
 ## 📸 Ekran Görüntüleri
 
-| Ana Güncelleme Ekranı | Paket Seçimi ve Detaylar |
+| Modern Libadwaita Arayüzü | Ayarlar ve Sistem Bakımı |
 | :---: | :---: |
 | ![Pars Update 1](../screenshots/pars-update-1.png) | ![Pars Update 2](../screenshots/pars-update-2.png) |
 
@@ -28,25 +32,35 @@
 
 ## 🚀 Hızlı Başlangıç
 
-### 1. Tek Komutla Otomatik Kurulum
-Bağımlılıkları otomatik kurup uygulamayı sisteme yüklemek için (Arch ve Debian otomatik algılanır):
+### 1. Çalıştırma
+```bash
+# Modern Libadwaita / GTK4 arayüzü ile başlat:
+./pars-update
+
+# Arka planda kontrol et (güncelleme varsa bildirim gösterir):
+./pars-update --check
+
+# Klasik GTK3 arayüzü ile başlat:
+./pars-update --gtk3
+```
+
+### 2. Tek Komutla Otomatik Kurulum
+Bağımlılıkları kurup uygulamayı sisteme yüklemek için (Arch ve Debian otomatik algılanır):
 ```bash
 sudo ./install.sh
 ```
 
-### 2. Kolay Çalıştırma
+### 3. Testleri Çalıştırma
 ```bash
-./run.sh
-# veya sistem tepsisi modunda:
-./run.sh --tray
+python3 -m unittest discover tests
 ```
 
-### 3. Kaldırma
+### 4. Kaldırma
 ```bash
 sudo ./uninstall.sh
 ```
 
-### 4. Paket Derleme
+### 5. Paket Derleme
 * **Arch Linux (PKGBUILD):**
   ```bash
   makepkg -si
@@ -64,7 +78,7 @@ sudo ./uninstall.sh
 Projenin tüm teknik, operasyonel ve kullanıcı dokümanlarına aşağıdaki bağlantılardan ulaşabilirsiniz:
 
 ### Çekirdek ve Sistem Dokümantasyonu
-* 🏗️ **[Sistem Mimarisi (ARCHITECTURE.md)](ARCHITECTURE.md)**: Çift katmanlı süreç mimarisi, Polkit ve IPC entegrasyonu.
+* 🏗️ **[Sistem Mimarisi (ARCHITECTURE.md)](ARCHITECTURE.md)**: Core/UI katman ayrımı, GTK4 & Libadwaita yapısı, Polkit ve IPC entegrasyonu.
 * 📦 **[Kurulum Kılavuzu (INSTALL.md)](INSTALL.md)**: Ayrıntılı derleme, bağımlılıklar ve kurulum adımları.
 * 🛡️ **[Güvenlik Politikası (SECURITY.md)](SECURITY.md)**: Yetki ayrımı, girdi doğrulama ve güvenlik açığı bildirim süreci.
 * 💻 **[Komut Satırı Referansı (CLI_REFERENCE.md)](CLI_REFERENCE.md)**: `pars-update` ve arka plan betiklerinin tüm parametreleri.
@@ -76,7 +90,7 @@ Projenin tüm teknik, operasyonel ve kullanıcı dokümanlarına aşağıdaki ba
 
 ### Geliştirme ve Topluluk
 * 🤝 **[Katkı Sağlama Rehberi (CONTRIBUTING.md)](CONTRIBUTING.md)**: PR iş akışı, kod standartları ve kurallar.
-* 🧪 **[Test ve Kalite Güvencesi (TESTING.md)](TESTING.md)**: Birim, arayüz ve paket derleme testleri.
+* 🧪 **[Test ve Kalite Güvencesi (TESTING.md)](TESTING.md)**: Birim, UI ve sistem testleri (17/17 test).
 * 🌍 **[Çeviri Kılavuzu (TRANSLATION_GUIDE.md)](TRANSLATION_GUIDE.md)**: GNU gettext ile yeni dil ekleme ve güncelleme.
 * 🤖 **[AI & Asistan Yönergesi (CLAUDE.md)](CLAUDE.md)**: AI ajanları ve geliştiriciler için mimari standartlar.
 * 📈 **[İlerleme ve Yol Haritası (progress.md)](progress.md)**: Tamamlanan ve planlanan özellikler.

@@ -1,94 +1,127 @@
 # Pars Update - Sistem ve Yazılım Mimarisi (ARCHITECTURE.md)
 
-Bu belge, **Pars Update** uygulamasının mimarisini, bileşenler arası veri akışını, ayrıcalık yönetimini ve sistem entegrasyonlarını ayrıntılı olarak açıklamaktadır.
+Bu belge, **Pars Update** uygulamasının mimarisini, katmanlı yazılım tasarımını, bileşenler arası veri akışını, ayrıcalık yönetimini ve sistem entegrasyonlarını ayrıntılı olarak açıklamaktadır.
 
 ---
 
 ## 1. Yüksek Düzey Mimari (High-Level Architecture)
 
-Pars Update, güvenlik ilkeleri gereği **çift katmanlı (Privilege-Separated)** bir mimariyle tasarlanmıştır:
-1. **Kullanıcı Katmanı (Yetkisiz GUI Süreci):** Kullanıcı oturumu altında çalışan, masaüstü arayüzünü (GTK3) ve sistem tepsisi göstergesini (AppIndicator) barındıran süreç.
-2. **Sistem Katmanı (Ayrıcalıklı Arka Plan Süreci):** Polkit (`pkexec`) yetkilendirmesiyle root izinleriyle çalışan, paket yöneticisini (`apt`, `dpkg`) ve sistem ayarlarını yöneten betikler.
+Pars Update, modülerlik ve güvenlik ilkeleri gereği **katmanlı ve yetki ayrımlı (Privilege-Separated & Layered)** bir mimariyle tasarlanmıştır:
 
 ```
-+-----------------------------------------------------------+
-|              Kullanıcı Oturumu (Unprivileged)             |
-|                                                           |
-|   +-------------------+         +---------------------+   |
-|   |   Main.py (App)   | <-----> |   MainWindow.py     |   |
-|   +-------------------+         +---------------------+   |
-|             |                              |              |
-|             v                              v              |
-|   +-------------------+         +---------------------+   |
-|   |  UserSettings.py  |         |      Package.py     |   |
-|   | (~/.config/pars/) |         |    (python3-apt)    |   |
-|   +-------------------+         +---------------------+   |
-+-----------------------------------------------------------+
-                              |
-                     pkexec / D-Bus
-                              |
-+-----------------------------------------------------------+
-|               Root / Sistem Katmanı (Privileged)          |
-|                                                           |
-|   +----------------------+     +----------------------+   |
-|   |    SysActions.py     |     |  AptSourceActions.py |   |
-|   |  (apt upgrade, clean)|     | (sources.list onarım)|   |
-|   +----------------------+     +----------------------+   |
-|             |                              |              |
-|             v                              v              |
-|   +----------------------+     +----------------------+   |
-|   |  /etc/pars/          |     |  /var/log/           |   |
-|   |  pars-update.conf    |     |  pars-upgrade.log    |   |
-|   +----------------------+     +----------------------+   |
-+-----------------------------------------------------------+
++-----------------------------------------------------------------------------------+
+|                         Kullanıcı Oturumu (Unprivileged)                          |
+|                                                                                   |
+|  +-----------------------------------------------------------------------------+  |
+|  |                  Giriş ve Çalışma Zamanı Katmanı (Entry Layer)              |  |
+|  |   pars-update  -->  Main.py (GTK4 / Libadwaita tespiti veya --gtk3 seçimi) |  |
+|  +-----------------------------------------------------------------------------+  |
+|               |                                                     |             |
+|       (Varsayılan / GTK4)                                   (Fallback / GTK3)     |
+|               v                                                     v             |
+|  +---------------------------+                         +-----------------------+  |
+|  |   Arayüz Katmanı (src/ui)  |                         |   Eski GTK3 Katmanı   |  |
+|  |   - MainWindowAdw.py      |                         |   - MainWindow.py     |  |
+|  |   - PreferencesAdw.py     |                         |   - ui/MainWindow.    |  |
+|  |   (Libadwaita Widgets)    |                         |     glade             |  |
+|  +---------------------------+                         +-----------------------+  |
+|               \                                                     /             |
+|                +-------------------------+-------------------------+              |
+|                                          |                                        |
+|                                          v                                        |
+|  +-----------------------------------------------------------------------------+  |
+|  |                     Çekirdek Servis Katmanı (src/core)                      |  |
+|  |   - UpdateEngine.py       : Asenkron sorgulama, kilit denetimi, boyutlar    |  |
+|  |   - ConfigManager.py      : UserSettings & SystemSettings property sarmala. |  |
+|  |   - NotificationManager.py: Masaüstü bildirimleri (Libnotify)               |  |
+|  |   - TerminalRunner.py     : GTK4 VTE 3.91 terminal süreç yürütücüsü         |  |
+|  +-----------------------------------------------------------------------------+  |
+|                                          |                                        |
+|                                          v                                        |
+|  +-----------------------------------------------------------------------------+  |
+|  |                     Paket Motoru Katmanı (Engine & Backends)                |  |
+|  |   - PackageManagerBackend.py (PacmanBackend - Arch Linux / checkupdates)    |  |
+|  |   - Package.py               (Debian / python3-apt Cache köprüsü)           |  |
+|  +-----------------------------------------------------------------------------+  |
++-----------------------------------------------------------------------------------+
+                                           |
+                                  pkexec / Polkit IPC
+                                           |
++-----------------------------------------------------------------------------------+
+|                         Sistem Katmanı (Root / Privileged)                        |
+|                                                                                   |
+|   +-----------------------+  +-----------------------+  +---------------------+   |
+|   |     SysActions.py     |  |  AptSourceActions.py  |  |      Group.py       |   |
+|   | (pacman -Syu / clean) |  | (mirrorlist / sources)|  | (pars-update grubu) |   |
+|   | (apt upgrade / clean) |  | (güvenli satır filtres|  | (parolasız polkit)  |   |
+|   +-----------------------+  +-----------------------+  +---------------------+   |
+|               |                          |                          |             |
+|               v                          v                          v             |
+|   +-----------------------+  +-----------------------+  +---------------------+   |
+|   |  /etc/pars/           |  |  /var/log/            |  | /etc/polkit-1/      |   |
+|   |  pars-update.conf     |  |  pars-upgrade.log     |  | rules.d/            |   |
+|   +-----------------------+  +-----------------------+  +---------------------+   |
++-----------------------------------------------------------------------------------+
 ```
 
 ---
 
-## 2. Bileşenler ve Görevleri
+## 2. Katmanlar ve Bileşenlerin Görevleri
 
-### 2.1 Arayüz ve Sunum Katmanı
-* **`Main.py`:**
-  * GTK+ `Gtk.Application` sınıfını uygular (`org.pars.update`).
-  * `--tray` (yalnızca sistem tepsisinde başlat) ve `--page <sayfa_adı>` argümanlarını işler.
-  * Tekil örnek (Single-instance) denetimi yapar; uygulama zaten çalışıyorsa mevcut pencereyi öne getirir.
-* **`MainWindow.py`:**
-  * Glade XML tanımından (`ui/MainWindow.glade`) arayüz bileşenlerini yükler.
-  * Paket yükseltme, artık paket temizliği, APT kaynak listesi düzeltme ve ayarlar sayfalarını yönetir.
-  * Terminal çıktılarını kullanıcıya canlı göstermek için `Vte.Terminal` bileşenini kullanır.
-  * Sistem tepsisi simgesini (`AyatanaAppIndicator3`) ve masaüstü bildirimlerini (`Notify`) kontrol eder.
+### 2.1 Giriş ve Çalışma Zamanı Katmanı
+* **`pars-update` (Başlatıcı Betik):**
+  * Uygulamanın `/usr/bin/pars-update` üzerinden veya yerel geliştirme dizininden doğrudan çalıştırılmasını sağlar.
+* **`src/Main.py`:**
+  * Çalışma ortamında GTK4 ve Libadwaita (`Adw.Application`) kütüphanelerinin varlığını kontrol eder.
+  * Kullanıcı `--gtk3` veya `--legacy` argümanı vermişse ya da sistemde GTK4 bulunmuyorsa, süreci çökertmeden temiz şekilde eski GTK3 `MainWindow` modülüne yönlendirir.
+* **`src/MainAdw.py`:**
+  * GTK4 `Adw.Application` (`org.pars.update`) sınıfını barındırır.
+  * `-t, --tray`, `-c, --check` ve `-p, --page` argümanlarını işler.
+  * `do_activate` ve `do_command_line` sinyalleriyle tekil örnek (single-instance) yönetimini sağlar.
 
-### 2.2 Veri ve Paket Yönetimi Katmanı (Çoklu Dağıtım Desteği)
-* **`PackageManagerBackend.py` (Çoklu Arka Uç Motoru):**
-  * Dağıtımı (`/etc/os-release` veya `distro`) ve paket yöneticisini dinamik olarak algılar.
-  * **`PacmanBackend` (Arch Linux):**
-    * `checkupdates` ve `pacman -Qu` ile güncellenebilir paketleri toplar.
-    * `pacman -Si` ve `pacman -Qi` ile paket bilgilerini ve indirme/kurulum boyutlarını hesaplar.
-    * `pacman -Qdtq` ile yetim (orphan/autoremovable) paketleri tespit eder.
-    * `vercmp` CLI ikilisi ile paket sürümlerini güvenle karşılaştırır.
-    * `/var/lib/pacman/db.lck` kilidini denetler.
+### 2.2 Kullanıcı Arayüzü Katmanı (`src/ui/`)
+* **`src/ui/MainWindowAdw.py`:**
+  * `Adw.ApplicationWindow`, `Adw.ToolbarView` ve `Adw.HeaderBar` kullanır.
+  * `Adw.ViewStack` ile 5 farklı uygulama durumunu akıcı şekilde yönetir:
+    1. `uptodate`: Sistem güncel durumu ve son kontrol tarihi.
+    2. `checking`: Asenkron sorgulama sırasında dönen spinner ekranı.
+    3. `updates`: Seçilebilir paket listesi, sürüm geçişleri (`1.0.0 -> 1.0.1`) ve indirme boyutu rozetleri.
+    4. `terminal`: Yükseltme işlemi sırasında canlı VTE terminal çıktısı.
+    5. `error`: Kilit veya ağ hatası durumu; tek tıkla kilit temizleme ve tekrar deneme butonları.
+  * `Adw.ToastOverlay` ile kullanıcıya modern geri bildirim bildirimleri gösterir.
+* **`src/ui/PreferencesAdw.py`:**
+  * `Adw.PreferencesWindow` sınıfından türetilmiştir.
+  * **Genel:** Kontrol periyodu (Günlük, Haftalık, Asla), sistem açılışında otomatik başlama ve masaüstü bildirim anahtarları.
+  * **Depolar / Aynalar:** Arch Linux'ta aktif Pacman yansıları, Debian'da APT kaynakları listelenir; kullanıcı anahtarlarla depoları açıp kapatabilir.
+  * **Bakım:** Önbellek temizliği (`pacman -Sc` / `apt clean`) ve yetim paket temizliği (`removeauto`).
+
+### 2.3 Çekirdek Servis Katmanı (`src/core/`)
+* **`src/core/UpdateEngine.py`:**
+  * Tüm paket sorgulama ve kilit denetimlerini arayüzden bağımsız olarak yürütür.
+  * `check_updates_async`: GLib iş parçacığı (`threading.Thread`) açarak arka planda depoları sorgular; UI'ın donmasını engeller.
+  * `calculate_sizes`: Kullanıcının işaretlemediği paketleri dışarıda tutarak (`keep_list`) dinamik olarak indirme ve kurulum boyutunu hesaplar.
+* **`src/core/ConfigManager.py`:**
+  * Kullanıcı ayarları (`~/.config/pars/pars-update.json`) ve sistem ayarlarını (`/etc/pars/pars-update.conf`) tek bir API arkasında toplar.
+* **`src/core/NotificationManager.py`:**
+  * `libnotify` tabanlı masaüstü bildirimlerini soyutlar.
+* **`src/core/TerminalRunner.py`:**
+  * GTK4 VTE 3.91 terminal süreç yürütücüsüdür. PTY oluşturur, komutu asenkron başlatır (`spawn_async`) ve süreç bittiğinde `child-exited` sinyaliyle geri çağrımı tetikler.
+
+### 2.4 Paket Motoru Katmanı (Multi-Backend)
+* **`PackageManagerBackend.py` (PacmanBackend):**
+  * Arch Linux üzerinde `pacman`, `checkupdates` (`pacman-contrib`) araçlarıyla çalışır.
+  * `_query_pacman_si_batch`: Tüm güncellenebilir paket bilgilerini tek seferde çekerek kontrol süresini milisaniyelere indirir.
+  * `vercmp` ile güvenilir sürüm karşılaştırması yapar.
 * **`Package.py`:**
-  * Çift yönlü köprü (Facade) görevi görür.
-  * Sistem Debian tabanlı ise `python3-apt` (`apt.Cache()`) üzerinden, Arch Linux tabanlı ise `PacmanBackend` üzerinden çalışır.
-  * Arayüze standartlaştırılmış veri yapıları sunar.
-* **`RepoDistControl.py`:**
-  * Dağıtım sunucusundaki `dists.json` dosyasını çekerek ana sürüm yükseltmesi (Distribution Upgrade) olup olmadığını kontrol eder.
+  * Debian üzerinde `python3-apt` (`apt.Cache()`) arayüzünü bağlar.
 
-### 2.3 Sistem ve Ayrıcalıklı Eylemler Katmanı
-* **`SysActions.py`:**
-  * `pkexec` üzerinden çağrılır.
-  * **APT (Debian):** `apt update`, `apt full-upgrade`, `apt autoremove`, `dpkg --configure -a` ve `apt clean` operasyonlarını icra eder.
-  * **Pacman (Arch Linux):** `pacman -Syu`, `pacman -Rns $(pacman -Qdtq)`, `pacman -Sc`, ve `/var/lib/pacman/db.lck` kilit kontrol/temizleme işlemlerini yürütür.
-  * Çevrimdışı güvenli güncelleme (`distupgradeoffline`) mekanizmasını başlatır.
-* **`AptSourceActions.py`:**
-  * Debian üzerinde `/etc/apt/sources.list` ve `/etc/apt/sources.list.d/` yapılandırmalarını düzenler.
-  * Arch Linux üzerinde `/etc/pacman.d/mirrorlist` aynalarını etkinleştirir/devre dışı bırakır ve `pacman -Sy` ile önbelleği yeniler.
-  * Güvenlik filtresi (`is_safe_sources`): Zararlı kaynak satırlarını (ör. `trusted=yes`, `file://`) engeller.
-* **`SystemSettings.py` & `SystemSettingsWrite.py`:**
-  * `/etc/pars/pars-update.conf` sistem çapındaki yapılandırmasını yönetir (dizin yoksa otomatik oluşturulur).
-* **`Group.py`:**
-  * Kullanıcının `pars-update` grubuna eklenmesini veya çıkarılmasını sağlar (Polkit parolasız kullanım).
-  * Dağıtımdan bağımsız olarak `gpasswd`, `usermod` ve `adduser`/`deluser` araçlarını kullanır; grup yoksa `groupadd -r` ile otomatik tanımlar.
+### 2.5 Ayrıcalıklı Sistem Katmanı (Privileged Root)
+* **`SysActions.py` (`pkexec`):**
+  * Paket yükseltme, temizleme, kilit çözme işlemlerini root yetkisiyle icra eder. Kilit silme öncesinde çalışan `pacman` sürecini denetler.
+* **`AptSourceActions.py` (`pkexec`):**
+  * `/etc/apt/sources.list` veya `/etc/pacman.d/mirrorlist` dosyalarını güvenli biçimde günceller.
+* **`Group.py` (`pkexec`):**
+  * Kullanıcıyı `pars-update` grubuna ekleyerek parolasız polkit yetkisi tanır.
 
 ---
 
@@ -96,29 +129,7 @@ Pars Update, güvenlik ilkeleri gereği **çift katmanlı (Privilege-Separated)*
 
 Büyük sistem güncellemelerinde oturumun çökmesini önlemek için Pars Update, Systemd çevrimdışı güncelleme standardını destekler:
 
-1. Paketler kullanıcı oturumundayken `/var/cache/apt/archives/` dizinine indirilir (`--download-only`).
+1. Paketler kullanıcı oturumundayken indirilir (`--download-only`).
 2. `/system-update` tetikleyici dosyası oluşturulur.
-3. `pars-safeupgrade.service`, `system-update.target.wants` altına sembolik bağ ile bağlanır.
-4. Sistem yeniden başlatıldığında, masaüstü ortamı açılmadan önce Systemd `system-update.target` devreye girer.
-5. Plymouth açılış ekranı üzerinden ilerleme yüzdesi gösterilerek paketler kurulur.
-6. İşlem tamamlandığında `/var/log/pars-upgrade.log` dosyasına rapor yazılır ve makine normal şekilde açılır.
-
----
-
-## 4. Yetkilendirme Modeli (Polkit Integration)
-
-* **Yetki Politikası:** `data/org.pars.pkexec.pars-update.policy`
-  * Eylemler `org.pars.pkexec.pars-update-*` kimliğiyle tanımlıdır.
-  * Her eylem hedef Python betiğinin tam yoluna (`/usr/share/pars/pars-update/src/...`) bağlanmıştır.
-* **Grup İzni Kuralı:** `data/pars-update-group.rules`
-  * Eğer kullanıcı `pars-update` grubunda ise, parola girmeden (`polkit.Result.YES`) güncelleme yapabilir.
-
----
-
-## 5. Yapılandırma Dosyaları Hiyerarşisi
-
-| Düzey | Konum | Amaç |
-| :--- | :--- | :--- |
-| **Sistem Ayarları** | `/etc/pars/pars-update.conf` | Yönetici tarafından belirlenen global kontrol aralığı ve kilitler |
-| **Kullanıcı Ayarları**| `~/.config/pars/pars-update/settings.ini` | Kullanıcı tercihleri (otomatik başlatma, bildirimler, kontrol sıklığı) |
-| **Hariç Tutulanlar**| `~/.config/pars/pars-update/user_keeps` | Kullanıcının güncellemek istemediği paketlerin listesi |
+3. Sistem yeniden başlatıldığında Plymouth açılış ekranı altında `pars-safeupgrade.service` devreye girer.
+4. Paketler hiçbir grafik oturumu açık değilken kurulur ve sistem temiz şekilde yeniden başlar.
