@@ -70,6 +70,15 @@ class ConfigManager:
         self.user.config_update_selectable = val
         self._save()
 
+    @property
+    def pause_on_metered(self) -> bool:
+        return bool(getattr(self.user, "config_pause_on_metered", True))
+
+    @pause_on_metered.setter
+    def pause_on_metered(self, val: bool) -> None:
+        self.user.config_pause_on_metered = bool(val)
+        self._save()
+
     def record_update_now(self) -> None:
         """Record current timestamp as last update check time."""
         now = int(time.time())
@@ -82,4 +91,6 @@ class ConfigManager:
             self.user.config_update_selectable,
             self.user.config_autostart,
             self.user.config_notifications,
+            self.user.config_pause_on_metered,
         )
+

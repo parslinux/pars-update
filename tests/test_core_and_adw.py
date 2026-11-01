@@ -45,6 +45,26 @@ class TestCoreArchitecture(unittest.TestCase):
         orphans = self.engine.get_orphans()
         self.assertIsInstance(orphans, list)
 
+    def test_update_engine_requires_reboot(self):
+        self.assertTrue(self.engine.requires_reboot("linux"))
+        self.assertTrue(self.engine.requires_reboot("linux-lts"))
+        self.assertTrue(self.engine.requires_reboot("linux-zen"))
+        self.assertTrue(self.engine.requires_reboot("linux-image-6.1.0-amd64"))
+        self.assertTrue(self.engine.requires_reboot("glibc"))
+        self.assertFalse(self.engine.requires_reboot("curl"))
+        self.assertFalse(self.engine.requires_reboot("nano"))
+
+    def test_update_engine_get_package_details(self):
+        details = self.engine.get_package_details("curl")
+        self.assertIsInstance(details, dict)
+        self.assertEqual(details["name"], "curl")
+        self.assertIn("version", details)
+        self.assertIn("description", details)
+        self.assertIn("url", details)
+        self.assertIn("changelog", details)
+        self.assertIn("requires_reboot", details)
+        self.assertFalse(details["requires_reboot"])
+
     def test_config_manager_properties(self):
         original_interval = self.config.interval
         self.config.interval = 86400
@@ -56,6 +76,23 @@ class TestCoreArchitecture(unittest.TestCase):
         # Restore
         self.config.autostart = original_autostart
         self.config.interval = original_interval
+
+        orig_metered = self.config.pause_on_metered
+        self.config.pause_on_metered = not orig_metered
+        self.assertEqual(self.config.pause_on_metered, not orig_metered)
+        self.config.pause_on_metered = orig_metered
+
+    def test_network_monitor_initialization(self):
+        from core.NetworkMonitor import NetworkMonitor
+        net = NetworkMonitor()
+        self.assertIsInstance(net.is_connected, bool)
+        self.assertIsInstance(net.is_metered, bool)
+        self.assertIsInstance(net.connectivity, int)
+        dummy_cb = lambda c, m: None
+        net.add_listener(dummy_cb)
+        self.assertIn(dummy_cb, net._listeners)
+        net.remove_listener(dummy_cb)
+        self.assertNotIn(dummy_cb, net._listeners)
 
     def test_config_manager_record_update(self):
         self.config.record_update_now()
@@ -99,6 +136,30 @@ class TestAdwUIImports(unittest.TestCase):
             from MainAdw import UpdateApplication
             app = UpdateApplication()
             self.assertEqual(app.get_application_id(), "org.pars.update")
+        except (ValueError, ImportError) as e:
+            self.skipTest(f"GTK4 / Libadwaita environment not available: {e}")
+
+    def test_main_window_populate_and_clear_updates(self):
+        try:
+            import gi
+            gi.require_version("Gtk", "4.0")
+            gi.require_version("Adw", "1")
+            from gi.repository import Adw, Gtk
+            from MainAdw import UpdateApplication
+            from ui.MainWindowAdw import MainWindowAdw
+            Adw.init()
+            win = MainWindowAdw(application=None)
+            fake_updates = [
+                {"name": "test-pkg1", "old_version": "1.0", "new_version": "1.1", "size_str": "1 MB"},
+                {"name": "test-pkg2", "old_version": "2.0", "new_version": "2.1", "size_str": "2 MB"}
+            ]
+            win._populate_updates_view(fake_updates)
+            self.assertEqual(len(win.update_rows), 2)
+            # Re-populating should clear previous rows without any AdwPreferencesGroup critical error
+            win._populate_updates_view([fake_updates[0]])
+            self.assertEqual(len(win.update_rows), 1)
+            win._clear_updates_view()
+            self.assertEqual(len(win.update_rows), 0)
         except (ValueError, ImportError) as e:
             self.skipTest(f"GTK4 / Libadwaita environment not available: {e}")
 

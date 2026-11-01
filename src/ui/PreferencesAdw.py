@@ -83,6 +83,14 @@ class PreferencesAdw(Adw.PreferencesWindow):
         self.notif_row.connect("notify::active", lambda row, ps: setattr(self.config, "notifications", row.get_active()))
         check_group.add(self.notif_row)
 
+        # Metered network switch
+        self.metered_row = Adw.SwitchRow()
+        self.metered_row.set_title("Kotalı Ağlarda İndirmeyi Duraklat")
+        self.metered_row.set_subtitle("Mobil erişim noktası veya kotalı ağlarda mobil veriyi korur")
+        self.metered_row.set_active(self.config.pause_on_metered)
+        self.metered_row.connect("notify::active", lambda row, ps: setattr(self.config, "pause_on_metered", row.get_active()))
+        check_group.add(self.metered_row)
+
         page.add(check_group)
         self.add(page)
 

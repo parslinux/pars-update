@@ -1,6 +1,6 @@
 # Maintainer: Pars Linux Team <info@parslinux.org>
 pkgname=pars-update
-pkgver=1.4.3
+pkgver=1.5.0
 pkgrel=1
 pkgdesc="Modern system update manager for Pars Linux, Arch Linux and Debian derivatives"
 arch=('any')
@@ -12,11 +12,7 @@ depends=(
     'gtk4'
     'libadwaita'
     'vte4'
-    'gtk3'
     'libnotify'
-    'libsoup'
-    'vte3'
-    'libappindicator-gtk3'
     'polkit'
     'pacman-contrib'
 )

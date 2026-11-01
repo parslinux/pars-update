@@ -55,6 +55,24 @@ class TestPackageManagerBackend(unittest.TestCase):
         self.assertFalse(success)
         self.assertEqual(pkg, "")
 
+    def test_package_class_wrappers(self):
+        from Package import Package
+        pkg_obj = Package()
+        self.assertTrue(hasattr(pkg_obj, "control_lock"))
+        self.assertTrue(hasattr(pkg_obj, "required_changes"))
+        locked, msg = pkg_obj.control_lock()
+        self.assertIsInstance(locked, bool)
+        rc = pkg_obj.required_changes("curl", sleep=False)
+        self.assertIn("to_delete", rc)
+        self.assertFalse(pkg_obj.versionCompare(None, "1.0"))
+        self.assertFalse(pkg_obj.versionCompare("1.0", None))
+
+    def test_pacman_batch_query_resilience(self):
+        self.backend._query_pacman_si_batch(["nonexistent_pkg_12345"])
+        info = self.backend._query_pacman_si("nonexistent_pkg_12345")
+        self.assertEqual(info["name"], "nonexistent_pkg_12345")
+        self.assertEqual(info["version"], "")
+
 
 class TestSvgAssets(unittest.TestCase):
     def setUp(self):

@@ -9,14 +9,19 @@ import locale
 import os
 import re
 import subprocess
+import sys
 import time
+
+sys_dir = os.path.dirname(os.path.abspath(__file__))
+if sys_dir not in sys.path:
+    sys.path.insert(0, sys_dir)
 
 from PackageManagerBackend import get_package_manager, PacmanBackend
 
 try:
-    import apt
-    import apt_pkg
-    from aptsources import sourceslist as aptsourceslist
+    import apt  # type: ignore
+    import apt_pkg  # type: ignore
+    from aptsources import sourceslist as aptsourceslist  # type: ignore
     HAVE_APT = True
 except ImportError:
     HAVE_APT = False
@@ -24,7 +29,11 @@ except ImportError:
     apt_pkg = None
     aptsourceslist = None
 
-from gi.repository import Gio, GLib
+try:
+    from gi.repository import Gio, GLib
+except ImportError:
+    Gio = None
+    GLib = None
 
 
 class Package(object):
@@ -54,9 +63,32 @@ class Package(object):
         else:
             self._update_cache_error_msg = value
 
+    def control_lock(self):
+        """Checks whether the package manager backend is locked."""
+        if self.backend:
+            return self.backend.control_lock()
+        if not HAVE_APT:
+            return True, ""
+        try:
+            apt_pkg.init_system()
+            apt_pkg.pkgsystem_lock()
+            apt_pkg.pkgsystem_unlock()
+            return True, ""
+        except SystemError as e:
+            return False, str(e)
+        except Exception as e:
+            return False, str(e)
+
+    def _ensure_cache(self):
+        """Ensures apt cache is opened if backend is APT."""
+        if self.backend is None and self.cache is None and HAVE_APT:
+            self.updatecache()
+
     def updatecache(self):
         if self.backend:
             return self.backend.updatecache()
+        if not HAVE_APT:
+            return False
         try:
             self.cache = apt.Cache()
             self.cache.open()
@@ -69,13 +101,21 @@ class Package(object):
     def getApps(self):
         if self.backend:
             return self.backend.get_installed_apps()
+        self._ensure_cache()
+        if not self.cache:
+            return []
+        self.apps = []
         for mypkg in self.cache:
             name = mypkg.name
             try:
                 section = mypkg.candidate.section.lower()
             except:
-                section = mypkg.versions[0].section.lower()
+                try:
+                    section = mypkg.versions[0].section.lower()
+                except:
+                    section = ""
             self.apps.append({"name": name, "category": section})
+        return self.apps
 
     def control_dpkg_interrupt(self):
         if self.backend:
@@ -85,6 +125,9 @@ class Package(object):
     def controlPackageCache(self, packagename):
         if self.backend:
             return self.backend.controlPackageCache(packagename)
+        self._ensure_cache()
+        if not self.cache:
+            return False
         try:
             self.cache[packagename]
         except:
@@ -94,6 +137,9 @@ class Package(object):
     def isinstalled(self, packagename):
         if self.backend:
             return self.backend.isinstalled(packagename)
+        self._ensure_cache()
+        if not self.cache:
+            return None
         try:
             package = self.cache[packagename]
         except:
@@ -103,16 +149,25 @@ class Package(object):
     def missingdeps(self, packagename):
         if self.backend:
             return self.backend.missingdeps(packagename)
-        package = self.cache[packagename]
-        for rd in package.candidate.get_dependencies("Depends"):
-            if not rd.installed_target_versions:
-                return True
+        self._ensure_cache()
+        if not self.cache:
+            return False
+        try:
+            package = self.cache[packagename]
+            for rd in package.candidate.get_dependencies("Depends"):
+                if not rd.installed_target_versions:
+                    return True
+        except:
+            pass
         return False
 
     def get_depends(self, packagename):
         if self.backend:
             return self.backend.get_depends(packagename)
         dependencies = []
+        self._ensure_cache()
+        if not self.cache:
+            return dependencies
         try:
             package = self.cache[packagename]
             for dependency in package.candidate.dependencies:
@@ -133,6 +188,9 @@ class Package(object):
         if self.backend:
             return self.backend.get_rdepends(packagename, only_upgradable)
         rdependencies = []
+        self._ensure_cache()
+        if not self.cache:
+            return rdependencies
         try:
             for pkg in self.cache:
                 if only_upgradable:
@@ -167,6 +225,9 @@ class Package(object):
     def description(self, packagename, israw):
         if self.backend:
             return self.backend.description(packagename, israw)
+        self._ensure_cache()
+        if not self.cache:
+            return ""
         try:
             package = self.cache[packagename]
         except:
@@ -215,19 +276,37 @@ class Package(object):
     def summary(self, packagename):
         if self.backend:
             return self.backend.summary(packagename)
-        package = self.cache.get(packagename)
+        self._ensure_cache()
+        if not self.cache:
+            return ""
+        try:
+            package = self.cache[packagename]
+        except Exception:
+            return ""
         if package is None:
             return ""
         try:
-            return package.candidate.summary
-        except AttributeError:
-            sum = package.versions.get(0)
-        return sum.summary if hasattr(sum, "summary") else "Summary is not found"
+            if package.candidate and hasattr(package.candidate, "summary"):
+                return package.candidate.summary
+        except Exception:
+            pass
+        try:
+            if package.versions and len(package.versions) > 0:
+                return getattr(package.versions[0], "summary", "Summary is not found")
+        except Exception:
+            pass
+        return "Summary is not found"
 
     def candidate_version(self, packagename):
         if self.backend:
             return self.backend.candidate_version(packagename)
-        package = self.cache[packagename]
+        self._ensure_cache()
+        if not self.cache:
+            return ""
+        try:
+            package = self.cache[packagename]
+        except:
+            return ""
         try:
             version = package.candidate.version
         except:
@@ -240,6 +319,9 @@ class Package(object):
     def installed_version(self, packagename):
         if self.backend:
             return self.backend.installed_version(packagename)
+        self._ensure_cache()
+        if not self.cache:
+            return ""
         try:
             package = self.cache[packagename]
         except:
@@ -417,8 +499,14 @@ class Package(object):
     def required_changes_autoremove(self, packages, sleep=True):
         if self.backend:
             return self.backend.required_changes_autoremove(packages, sleep)
+        if isinstance(packages, str):
+            packages = [packages]
         if sleep:
             time.sleep(0.25)
+        self._ensure_cache()
+        if not self.cache:
+            return {"download_size": 0, "freed_size": 0, "install_size": 0, "to_install": [], "to_delete": [],
+                    "broken": [], "package_broken": None}
         self.cache.clear()
         to_install = []
         to_delete = []
@@ -472,6 +560,12 @@ class Package(object):
         ret["package_broken"] = package_broken
         return ret
 
+    def required_changes(self, packages, sleep=True):
+        """Legacy alias for required_changes_autoremove supporting both str and list."""
+        if isinstance(packages, str):
+            packages = [packages]
+        return self.required_changes_autoremove(packages, sleep=sleep)
+
     def myapps_remove_details(self, desktopname):
         if self.backend:
             return self.backend.myapps_remove_details(desktopname)
@@ -480,13 +574,13 @@ class Package(object):
             output = process.stdout.decode("utf-8")
             package = output[:output.find(":")].split(",")[0]
             if package:
-                return True, self.required_changes(package, sleep=False), package
+                return True, self.required_changes_autoremove([package], sleep=False), package
             else:
                 process = subprocess.run(["dpkg", "-S", os.path.basename(desktopname)], stdout=subprocess.PIPE)
                 output = process.stdout.decode("utf-8")
                 package = output[:output.find(":")].split(",")[0]
                 if package:
-                    return True, self.required_changes(package, sleep=False), package
+                    return True, self.required_changes_autoremove([package], sleep=False), package
                 else:
                     return False, None, ""
         except Exception as e:
@@ -517,14 +611,22 @@ class Package(object):
     def beauty_size(self, size):
         if self.backend:
             return self.backend.beauty_size(size)
-        if not isinstance(size, int):
+        if not isinstance(size, (int, float)):
             return "size not found"
-        return GLib.format_size(size)
+        if GLib:
+            return GLib.format_size(int(size))
+        for unit in ["B", "KiB", "MiB", "GiB", "TiB"]:
+            if size < 1024.0:
+                return "{:.1f} {}".format(size, unit)
+            size /= 1024.0
+        return "{:.1f} PiB".format(size)
 
     def get_installed_apps(self):
         if self.backend:
             return self.backend.get_installed_apps()
         apps = []
+        if not Gio:
+            return apps
         for app in Gio.DesktopAppInfo.get_all():
             id = app.get_id()
             name = app.get_name()
@@ -533,7 +635,7 @@ class Package(object):
             icon = app.get_string('Icon')
             description = app.get_description() or app.get_generic_name() or app.get_name()
             filename = app.get_filename()
-            keywords = " ".join(app.get_keywords())
+            keywords = " ".join(app.get_keywords() or [])
 
             if executable and not nodisplay:
                 apps.append({"id": id, "name": name, "icon": icon, "description": description, "filename": filename,
@@ -545,6 +647,8 @@ class Package(object):
     def parse_desktopfile(self, desktopfilename):
         if self.backend:
             return self.backend.parse_desktopfile(desktopfilename)
+        if not Gio:
+            return False, None
         try:
             app = Gio.DesktopAppInfo.new(desktopfilename)
             if app:
@@ -554,7 +658,7 @@ class Package(object):
                 icon = app.get_string('Icon')
                 description = app.get_description() or app.get_generic_name() or app.get_name()
                 filename = app.get_filename()
-                keywords = " ".join(app.get_keywords())
+                keywords = " ".join(app.get_keywords() or [])
                 return True, {"id": id, "name": name, "icon": icon, "description": description,
                               "filename": filename, "keywords": keywords, "executable": executable}
             else:
@@ -566,7 +670,13 @@ class Package(object):
     def origins(self, packagename):
         if self.backend:
             return self.backend.origins(packagename)
-        package = self.cache[packagename]
+        self._ensure_cache()
+        if not self.cache:
+            return None
+        try:
+            package = self.cache[packagename]
+        except:
+            return None
         try:
             component = package.candidate.origins[0]
         except:
@@ -580,6 +690,9 @@ class Package(object):
         if self.backend:
             return self.backend.residual()
         residual = []
+        self._ensure_cache()
+        if not self.cache:
+            return residual
         try:
             for pkg in self.cache:
                 if self.cache[pkg.name].has_config_files and not self.cache[pkg.name].is_installed:
@@ -592,6 +705,9 @@ class Package(object):
         if self.backend:
             return self.backend.autoremovable()
         autoremovable = []
+        self._ensure_cache()
+        if not self.cache:
+            return autoremovable
         try:
             for pkg in self.cache:
                 if self.cache[pkg.name].is_auto_removable:
@@ -604,6 +720,9 @@ class Package(object):
         if self.backend:
             return self.backend.upgradable()
         upgradable = []
+        self._ensure_cache()
+        if not self.cache:
+            return upgradable
         try:
             for pkg in self.cache:
                 if self.cache[pkg.name].is_upgradable:
@@ -617,6 +736,9 @@ class Package(object):
         if self.backend:
             return self.backend.upgradable_full()
         upgradable = []
+        self._ensure_cache()
+        if not self.cache:
+            return upgradable
         try:
             for pkg in self.cache:
                 if self.cache[pkg.name].is_upgradable:
@@ -630,6 +752,8 @@ class Package(object):
         if self.backend:
             return self.backend.get_sources()
         repos = {}
+        if not HAVE_APT or not aptsourceslist:
+            return repos
         sources = aptsourceslist.SourcesList()
         for source in sources.list:
             if source.invalid:
@@ -649,7 +773,11 @@ class Package(object):
     def versionCompare(self, version1, version2):
         if self.backend:
             return self.backend.versionCompare(version1, version2)
-        if version2 == "None" or version2 == "" or version2 is None:
+        if not version1 or version1 == "None" or not version2 or version2 == "None":
             return False
-        vc = apt_pkg.version_compare(version1, version2)
+        if not HAVE_APT or not apt_pkg:
+            if version1 == version2:
+                return 0
+            return 1 if version1 > version2 else -1
+        vc = apt_pkg.version_compare(str(version1), str(version2))
         return vc

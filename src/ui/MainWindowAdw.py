@@ -27,6 +27,7 @@ except Exception:
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.ConfigManager import ConfigManager
+from core.NetworkMonitor import NetworkMonitor
 from core.NotificationManager import NotificationManager
 from core.TerminalRunner import TerminalRunner
 from core.UpdateEngine import UpdateEngine
@@ -48,14 +49,19 @@ class MainWindowAdw(Adw.ApplicationWindow):
         self.config = ConfigManager()
         self.notifications = NotificationManager()
         self.terminal_runner = TerminalRunner()
+        self.network_monitor = NetworkMonitor()
+        self.network_monitor.add_listener(self._on_network_status_changed)
 
         self.current_updates: List[Dict[str, Any]] = []
         self.unselected_packages: set = set()
         self.upgrade_in_progress = False
+        self.upgrade_needs_reboot = False
+        self.update_rows: List[Adw.ActionRow] = []
 
         self._load_custom_css()
         self._build_ui()
         self._setup_autoupdate_timer()
+        self._update_network_banner()
 
         # Trigger initial check
         GLib.idle_add(self.refresh_updates)
@@ -81,6 +87,11 @@ class MainWindowAdw(Adw.ApplicationWindow):
         # HeaderBar
         self.header_bar = Adw.HeaderBar()
         self.toolbar_view.add_top_bar(self.header_bar)
+
+        # Network Status Banner
+        self.network_banner = Adw.Banner()
+        self.network_banner.connect("button-clicked", self._on_network_banner_button_clicked)
+        self.toolbar_view.add_top_bar(self.network_banner)
 
         # Title Widget
         title_widget = Adw.WindowTitle(title="Pars Update", subtitle="Sistem Güncelleme Yöneticisi")
@@ -187,10 +198,23 @@ class MainWindowAdw(Adw.ApplicationWindow):
         bottom_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
         bottom_box.set_margin_top(8)
 
+        info_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        info_vbox.set_hexpand(True)
+
         self.size_info_label = Gtk.Label(label="")
-        self.size_info_label.set_hexpand(True)
         self.size_info_label.set_halign(Gtk.Align.START)
-        bottom_box.append(self.size_info_label)
+        info_vbox.append(self.size_info_label)
+
+        self.reboot_warn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        reboot_icon = Gtk.Image.new_from_icon_name("system-reboot-symbolic")
+        reboot_lbl = Gtk.Label(label="Çekirdek veya temel sistem güncellemeleri yeniden başlatma gerektirecek.")
+        reboot_lbl.add_css_class("dim-label")
+        self.reboot_warn_box.append(reboot_icon)
+        self.reboot_warn_box.append(reboot_lbl)
+        self.reboot_warn_box.set_visible(False)
+        info_vbox.append(self.reboot_warn_box)
+
+        bottom_box.append(info_vbox)
 
         self.upgrade_btn = Gtk.Button(label="Sistemi Güncelle")
         self.upgrade_btn.add_css_class("suggested-action")
@@ -278,9 +302,50 @@ class MainWindowAdw(Adw.ApplicationWindow):
         self.page_error.set_child(btn_box)
         self.stack.add_named(self.page_error, "error")
 
-    def refresh_updates(self) -> None:
+    def _on_network_status_changed(self, connected: bool, metered: bool) -> None:
+        GLib.idle_add(self._update_network_banner, connected, metered)
+
+    def _update_network_banner(self, connected: Optional[bool] = None, metered: Optional[bool] = None) -> None:
+        if connected is None:
+            connected = self.network_monitor.is_connected
+        if metered is None:
+            metered = self.network_monitor.is_metered
+
+        if not connected:
+            self.network_banner.set_title("İnternet bağlantısı yok. Güncellemeler denetlenemiyor.")
+            self.network_banner.set_button_label("Yeniden Dene")
+            self.network_banner.set_revealed(True)
+        elif metered and self.config.pause_on_metered:
+            self.network_banner.set_title("Kotalı / Mobil Ağ: Güncellemelerin indirilmesi mobil tarifenizi tüketebilir.")
+            self.network_banner.set_button_label("Yine de Denetle")
+            self.network_banner.set_revealed(True)
+        else:
+            self.network_banner.set_revealed(False)
+
+    def _on_network_banner_button_clicked(self, banner: Adw.Banner) -> None:
+        if not self.network_monitor.is_connected:
+            self.refresh_updates()
+        else:
+            banner.set_revealed(False)
+            self.refresh_updates(force_metered=True)
+
+    def refresh_updates(self, force_metered: bool = False) -> None:
         """Triggers asynchronous update check and shows spinner page."""
         if self.upgrade_in_progress:
+            return
+
+        self._update_network_banner()
+
+        if not self.network_monitor.is_connected:
+            self.page_error.set_description("İnternet bağlantısı bulunamadı. Lütfen ağ bağlantınızı kontrol edin.")
+            self.stack.set_visible_child_name("error")
+            self.refresh_btn.set_sensitive(True)
+            return
+
+        if self.network_monitor.is_metered and self.config.pause_on_metered and not force_metered:
+            self.page_uptodate.set_description("Kotalı ağ bağlantısı tespit edildi.\nOtomatik denetim mobil verinizi korumak için duraklatıldı.")
+            self.stack.set_visible_child_name("uptodate")
+            self.refresh_btn.set_sensitive(True)
             return
 
         self.stack.set_visible_child_name("checking")
@@ -309,6 +374,7 @@ class MainWindowAdw(Adw.ApplicationWindow):
         self.config.record_update_now()
 
         if not updates:
+            self._clear_updates_view()
             now_str = datetime.now().strftime("%d.%m.%Y %H:%M")
             self.page_uptodate.set_description(f"Tüm paketler ve güvenlik yamaları en son sürümde.\nSon Kontrol: {now_str}")
             self.stack.set_visible_child_name("uptodate")
@@ -318,15 +384,16 @@ class MainWindowAdw(Adw.ApplicationWindow):
             if self.config.notifications:
                 self.notifications.notify_updates_available(len(updates), [u["name"] for u in updates[:5]])
 
+    def _clear_updates_view(self) -> None:
+        for row in self.update_rows:
+            try:
+                self.updates_group.remove(row)
+            except Exception as e:
+                logger.debug("Failed to remove row from updates_group: %s", e)
+        self.update_rows.clear()
+
     def _populate_updates_view(self, updates: List[Dict[str, Any]]) -> None:
-        # Clear existing rows
-        # Adw.PreferencesGroup doesn't have remove_all, so we rebuild group if needed
-        # Or remove child rows
-        while True:
-            first_child = self.updates_group.get_first_child()
-            if not first_child:
-                break
-            self.updates_group.remove(first_child)
+        self._clear_updates_view()
 
         self.updates_summary_label.set_text(f"{len(updates)} paket")
 
@@ -344,13 +411,34 @@ class MainWindowAdw(Adw.ApplicationWindow):
             check.connect("toggled", self._on_package_toggle, pkg_name)
             row.add_prefix(check)
 
+            # Reboot badge if kernel / glibc
+            if u.get("requires_reboot"):
+                reboot_badge = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
+                reboot_badge.add_css_class("badge-reboot")
+                reboot_badge.set_valign(Gtk.Align.CENTER)
+                reboot_badge.set_tooltip_text("Çekirdek veya temel sistem bileşeni. Güncelleme sonrası yeniden başlatma gerekir.")
+                reboot_icon = Gtk.Image.new_from_icon_name("system-reboot-symbolic")
+                reboot_badge.append(reboot_icon)
+                reboot_lbl = Gtk.Label(label="Yeniden Başlat")
+                reboot_badge.append(reboot_lbl)
+                row.add_suffix(reboot_badge)
+
             # Size badge
             size_badge = Gtk.Label(label=u.get("size_str", ""))
             size_badge.add_css_class("badge-ready")
             size_badge.set_valign(Gtk.Align.CENTER)
             row.add_suffix(size_badge)
 
+            # Info / Changelog button
+            info_btn = Gtk.Button(icon_name="dialog-information-symbolic")
+            info_btn.add_css_class("flat")
+            info_btn.set_valign(Gtk.Align.CENTER)
+            info_btn.set_tooltip_text("Paket Detayları ve Değişiklik Günlüğü")
+            info_btn.connect("clicked", lambda b, p=pkg_name: self._show_package_details_dialog(p))
+            row.add_suffix(info_btn)
+
             self.updates_group.add(row)
+            self.update_rows.append(row)
 
         self._update_size_summary()
 
@@ -368,12 +456,22 @@ class MainWindowAdw(Adw.ApplicationWindow):
         self.size_info_label.set_text(f"Seçilen: {count} paket  •  İndirme Boyutu: {d_str}")
         self.upgrade_btn.set_sensitive(count > 0)
 
+        has_reboot = any(
+            u["name"] not in self.unselected_packages and u.get("requires_reboot")
+            for u in self.current_updates
+        )
+        self.reboot_warn_box.set_visible(has_reboot)
+
     def start_upgrade(self) -> None:
         """Launches privileged upgrade inside the VTE terminal."""
         if not HAVE_VTE or not self.vte:
             self._show_toast("VTE Terminal bulunamadığı için yükseltme başlatılamadı.")
             return
 
+        self.upgrade_needs_reboot = any(
+            u["name"] not in self.unselected_packages and u.get("requires_reboot")
+            for u in self.current_updates
+        )
         self.upgrade_in_progress = True
         self.refresh_btn.set_sensitive(False)
         self.term_done_btn.set_visible(False)
@@ -399,9 +497,33 @@ class MainWindowAdw(Adw.ApplicationWindow):
             self.term_status_label.set_text("✓ Güncelleme başarıyla tamamlandı!")
             self.notifications.notify_completed()
             self._show_toast("Tüm güncellemeler başarıyla kuruldu.")
+            if self.upgrade_needs_reboot:
+                GLib.timeout_add(600, self._prompt_reboot_dialog)
         else:
             self.term_status_label.set_text(f"✗ İşlem tamamlanamadı (Çıkış Kodu: {status})")
             self._show_toast("Güncelleme işlemi sırasında bir sorun oluştu.")
+
+    def _prompt_reboot_dialog(self) -> None:
+        dialog = Adw.MessageDialog(
+            transient_for=self,
+            heading="Sistem Güncellemesi Tamamlandı",
+            body="Çekirdek veya temel sistem bileşenleri güncellendi. Yeni sürümün aktif olması için bilgisayarınızı yeniden başlatmanız önerilir."
+        )
+        dialog.add_response("later", "Daha Sonra")
+        dialog.add_response("reboot", "Şimdi Yeniden Başlat")
+        dialog.set_response_appearance("reboot", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.set_default_response("later")
+        dialog.set_close_response("later")
+        dialog.connect("response", self._on_reboot_dialog_response)
+        dialog.present()
+
+    def _on_reboot_dialog_response(self, dialog: Adw.MessageDialog, response_id: str) -> None:
+        if response_id == "reboot":
+            try:
+                subprocess.Popen(["systemctl", "reboot"])
+            except Exception as e:
+                logger.error("Failed to reboot: %s", e)
+                self._show_toast(f"Yeniden başlatılamadı: {e}")
 
     def _on_terminal_finished_clicked(self) -> None:
         self.refresh_updates()
@@ -416,6 +538,102 @@ class MainWindowAdw(Adw.ApplicationWindow):
             self._show_toast(f"Hata: {e}")
         self.refresh_updates()
 
+    def _show_package_details_dialog(self, pkg_name: str) -> None:
+        """Displays a modern Libadwaita window with package details and changelog."""
+        details = self.engine.get_package_details(pkg_name)
+
+        win = Adw.Window(transient_for=self, modal=True)
+        win.set_title(f"{pkg_name} — Paket Detayları")
+        win.set_default_size(560, 480)
+
+        tb = Adw.ToolbarView()
+        win.set_content(tb)
+
+        hb = Adw.HeaderBar()
+        tb.add_top_bar(hb)
+
+        scrolled = Gtk.ScrolledWindow()
+        clamp = Adw.Clamp(maximum_size=560)
+        clamp.set_margin_top(16)
+        clamp.set_margin_bottom(16)
+        clamp.set_margin_start(16)
+        clamp.set_margin_end(16)
+        scrolled.set_child(clamp)
+        tb.set_content(scrolled)
+
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+        clamp.set_child(vbox)
+
+        # Overview group
+        info_group = Adw.PreferencesGroup()
+        info_group.set_title("Paket Bilgileri")
+        if details.get("description"):
+            info_group.set_description(details["description"])
+
+        # Version row
+        ver_row = Adw.ActionRow()
+        ver_row.set_title("Aday Sürüm")
+        ver_row.set_subtitle(details.get("version", "-"))
+        info_group.add(ver_row)
+
+        # Repository row
+        if details.get("repository"):
+            repo_row = Adw.ActionRow()
+            repo_row.set_title("Depo (Repository)")
+            repo_row.set_subtitle(details["repository"])
+            info_group.add(repo_row)
+
+        # Download size row
+        if details.get("download_size"):
+            size_row = Adw.ActionRow()
+            size_row.set_title("İndirme Boyutu")
+            size_row.set_subtitle(details["download_size"])
+            info_group.add(size_row)
+
+        # Website row
+        if details.get("url"):
+            url_row = Adw.ActionRow()
+            url_row.set_title("Proje Ana Sayfası")
+            url_row.set_subtitle(details["url"])
+            url_btn = Gtk.Button(icon_name="web-browser-symbolic")
+            url_btn.set_valign(Gtk.Align.CENTER)
+            url_btn.add_css_class("flat")
+            url_btn.set_tooltip_text("Web Sitesini Aç")
+            url_btn.connect("clicked", lambda b, u=details["url"]: Gio.AppInfo.launch_default_for_uri(u))
+            url_row.add_suffix(url_btn)
+            info_group.add(url_row)
+
+        vbox.append(info_group)
+
+        # Changelog / Notes Group
+        cl_group = Adw.PreferencesGroup()
+        cl_group.set_title("Değişiklik Günlüğü (Changelog)")
+
+        changelog_text = details.get("changelog", "").strip()
+        if changelog_text:
+            text_view = Gtk.TextView()
+            text_view.set_editable(False)
+            text_view.set_cursor_visible(False)
+            text_view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+            text_view.set_monospace(True)
+            text_view.get_buffer().set_text(changelog_text)
+            text_view.set_margin_top(8)
+            text_view.set_margin_bottom(8)
+            text_view.set_margin_start(8)
+            text_view.set_margin_end(8)
+
+            cl_frame = Gtk.Frame()
+            cl_frame.set_child(text_view)
+            cl_group.add(cl_frame)
+        else:
+            no_cl_row = Adw.ActionRow()
+            no_cl_row.set_title("Yerel sürüm notu bulunmuyor")
+            no_cl_row.set_subtitle("Paket arşivinde doğrudan değişiklik kaydı verilmemiş.")
+            cl_group.add(no_cl_row)
+
+        vbox.append(cl_group)
+        win.present()
+
     def _open_preferences(self) -> None:
         pref_win = PreferencesAdw(self, self.config, self.engine)
         pref_win.present()
@@ -424,7 +642,7 @@ class MainWindowAdw(Adw.ApplicationWindow):
         about = Adw.AboutDialog()
         about.set_application_name("Pars Update")
         about.set_application_icon("pars-update")
-        about.set_version("1.4.4")
+        about.set_version("1.5.0")
         about.set_developer_name("Pars Linux Geliştiricileri")
         about.set_developers(["Pars Linux Team <dev@parslinux.org>"])
         about.set_website("https://github.com/parslinux/pars-update")
@@ -440,6 +658,12 @@ class MainWindowAdw(Adw.ApplicationWindow):
 
     def _timer_callback(self) -> bool:
         if not self.upgrade_in_progress:
+            if not self.network_monitor.is_connected:
+                logger.debug("Network unavailable, skipping auto-check")
+                return True
+            if self.network_monitor.is_metered and self.config.pause_on_metered:
+                logger.debug("Network is metered and pause_on_metered is active, skipping background auto-check")
+                return True
             self.engine.check_updates_async(self._on_check_completed)
         return True
 

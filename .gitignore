@@ -156,3 +156,6 @@ cython_debug/
 *.glade#
 
 required_changes_for_upgrade.json
+
+.vscode/
+*.deb

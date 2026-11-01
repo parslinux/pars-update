@@ -1,10 +1,26 @@
+pars-update (1.5.0) unstable; urgency=medium
+
+  * Modern GTK4 and Libadwaita architecture rewrite
+  * Decouple core update engine, config, notifications and terminal runner
+  * Dual package manager support: native Arch Linux (Pacman) and Debian (APT)
+  * NetworkManager and GIO integration for metered/mobile network protection
+  * Add automatic pause on metered network with Adw.Banner notification
+  * Kernel and core system update detection with reboot-required badge
+  * Post-upgrade reboot prompt dialog via Adw.MessageDialog
+  * Package details and Changelog viewer window with project web links
+  * Remove 2765-line legacy GTK3 MainWindow and Glade UI to streamline codebase
+  * Modern vector branding, squircle application logo and status icon set
+  * 23 automated unit and integration tests with 100% pass rate
+
+ -- Pars Linux Team (ozgursimo) <dev@parslinux.org>  Sun, 18 Oct 2026 21:30:00 +0300
+
 pars-update (0.7.1) unstable; urgency=medium
 
-  * Rebrand application from pars-update to pars-update
+  * Fork and rebrand application from pardus-update to pars-update
   * Update application ID to org.pars.update
   * Update desktop files, polkit policies and systemd services
 
- -- Pars Team <dev@parslinux.org>  Mon, 12 Oct 2026 01:30:00 +0300
+ -- Pars Linux Team (ozgursimo) <dev@parslinux.org>  Mon, 12 Oct 2026 01:30:00 +0300
 
 pars-update (0.7.0) unstable; urgency=medium
 

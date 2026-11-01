@@ -4,6 +4,24 @@ Bu belgede **Pars Update** projesinin tüm sürümlerine ait değişiklikler, ye
 
 ---
 
+## [1.5.0] - 2026-10-18
+### Eklendi (Kotalı Ağ Koruması, Çekirdek Yeniden Başlatma Bildirimi & Detaylı Changelog)
+* **NetworkManager ve Kotalı / Mobil Ağ Koruması (`src/core/NetworkMonitor.py`):**
+  * GIO ve NetworkManager D-Bus entegrasyonu ile aktif internet ve kotalı bağlantı (mobil erişim noktası / hotspot / hücresel veri) tespiti.
+  * `Adw.Banner` ile kotalı ağda kullanıcıyı bilgilendirme ve otomatik arka plan indirmelerini duraklatma seçeneği (`pause_on_metered`).
+  * Çevrimdışı durumlarda anında uyarı ve "Yeniden Dene" eylemi.
+* **Çekirdek (Kernel) ve Temel Sistem Güncelleme Uyarısı:**
+  * Çekirdek (`linux`, `linux-lts`, `linux-zen`, `linux-image-*`), `glibc`, `libc6`, `systemd` ve `udev` paketleri için `requires_reboot` tespiti.
+  * Güncelleme listesinde turuncu `.badge-reboot` "Yeniden Başlat" rozeti ve alt eylem çubuğunda özet uyarı.
+  * Güncelleme tamamlandığında `Adw.MessageDialog` ile kullanıcıya sistemi şimdi veya daha sonra yeniden başlatma seçeneği sunma.
+* **Paket Detayları ve Değişiklik Günlüğü Görüntüleyici (Changelog):**
+  * Güncelleme listesindeki her paket için bilgi butonu (`dialog-information-symbolic`).
+  * `Adw.Window` tabanlı detay penceresi: sürüm, açıklama, depo, indirme boyutu, proje web sitesi açma butonu ve yerel changelog (`pacman -Qc` / `apt-get changelog`) metin görüntüleyicisi.
+* **Testler ve Kalite Güvencesi:**
+  * Test paketi 23 birim/entegrasyon testine genişletildi (%100 başarı).
+
+---
+
 ## [1.4.4] - 2026-10-14
 ### Eklendi & Yenilendi (GTK4 / Libadwaita Rewrite, Core Ayrımı, Arch Linux & Yeni Vektörel Görsel Kimlik)
 * **Çekirdek (Core) ve Arayüz (UI) Katman Ayrımı:**

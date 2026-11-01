@@ -24,9 +24,9 @@
 
 ## 📸 Ekran Görüntüleri
 
-| Modern Libadwaita Arayüzü | Ayarlar ve Sistem Bakımı |
-| :---: | :---: |
-| ![Pars Update 1](../screenshots/pars-update-1.png) | ![Pars Update 2](../screenshots/pars-update-2.png) |
+| Güncellemeler Listesi | Sistem Güncel Durumu | Ayarlar ve Bakım |
+| :---: | :---: | :---: |
+| ![Pars Update Güncellemeler](../screenshots/pars-update-1.png) | ![Pars Update Sistem Güncel](../screenshots/pars-update-2.png) | ![Pars Update Ayarlar](../screenshots/pars-update-3.png) |
 
 ---
 

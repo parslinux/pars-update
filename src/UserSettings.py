@@ -24,6 +24,7 @@ class UserSettings(object):
 
         self.default_autostart = True
         self.default_notifications = True
+        self.default_pause_on_metered = True
 
         self.user_name = GLib.get_user_name()
 
@@ -43,6 +44,7 @@ class UserSettings(object):
 
         self.config_autostart = self.default_autostart
         self.config_notifications = self.default_notifications
+        self.config_pause_on_metered = self.default_pause_on_metered
 
     def createDefaultConfig(self, force=False):
         self.config['Update'] = {"interval": self.default_update_interval,
@@ -50,7 +52,8 @@ class UserSettings(object):
                                  "selectable": self.default_update_selectable}
 
         self.config['Main'] = {"autostart": self.default_autostart,
-                               "notifications": self.default_notifications}
+                               "notifications": self.default_notifications,
+                               "pause_on_metered": self.default_pause_on_metered}
 
         if not Path.is_file(Path(self.configdir + self.configfile)) or force:
             if self.createDir(self.configdir):
@@ -68,6 +71,7 @@ class UserSettings(object):
             self.config_update_selectable = self.config.getboolean('Update', 'selectable')
             self.config_autostart = self.config.getboolean('Main', 'autostart')
             self.config_notifications = self.config.getboolean('Main', 'notifications')
+            self.config_pause_on_metered = self.config.getboolean('Main', 'pause_on_metered', fallback=self.default_pause_on_metered)
 
         except Exception as e:
             print("{}".format(e))
@@ -78,17 +82,26 @@ class UserSettings(object):
             self.config_update_selectable = self.default_update_selectable
             self.config_autostart = self.default_autostart
             self.config_notifications = self.default_notifications
+            self.config_pause_on_metered = self.default_pause_on_metered
             try:
                 self.createDefaultConfig(force=True)
             except Exception as e:
                 print("self.createDefaultConfig(force=True) : {}".format(e))
 
-    def writeConfig(self, interval, lastupdate, selectable, autostart, notifications):
+    def writeConfig(self, interval, lastupdate, selectable, autostart, notifications, pause_on_metered=None):
         if interval < 30 and interval != -1:
             print("interval must be greeter than 30 seconds")
             interval = 30
+        if pause_on_metered is None:
+            pause_on_metered = self.config_pause_on_metered
+        else:
+            self.config_pause_on_metered = pause_on_metered
         self.config['Update'] = {"interval": interval, "lastupdate": lastupdate, "selectable": selectable}
-        self.config['Main'] = {"autostart": autostart, "notifications": notifications}
+        self.config['Main'] = {
+            "autostart": autostart,
+            "notifications": notifications,
+            "pause_on_metered": pause_on_metered
+        }
         if self.createDir(self.configdir):
             with open(self.configdir + self.configfile, "w") as cf:
                 self.config.write(cf)

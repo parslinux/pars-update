@@ -9,16 +9,21 @@ import json
 import locale
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 from shutil import rmtree
 
+sys_dir = os.path.dirname(os.path.abspath(__file__))
+if sys_dir not in sys.path:
+    sys.path.insert(0, sys_dir)
+
 from PackageManagerBackend import get_package_manager
 
 try:
-    import apt
-    import apt_pkg
+    import apt  # type: ignore
+    import apt_pkg  # type: ignore
     HAVE_APT = True
 except ImportError:
     HAVE_APT = False
@@ -34,7 +39,11 @@ def main():
     backend = get_package_manager()
 
     def parse_packages(packages):
-        if not packages or not packages.strip():
+        if not packages:
+            return []
+        if isinstance(packages, (list, tuple, set)):
+            packages = " ".join(packages)
+        if not isinstance(packages, str) or not packages.strip():
             return []
 
         packagelist = packages.split()
@@ -64,6 +73,10 @@ def main():
         return True, ""
 
     def pacman_subupdate():
+        lock, msg = pacman_control_lock()
+        if not lock:
+            print("pacman lock error: {}".format(msg), file=sys.stderr)
+            sys.exit(11)
         subprocess.call(["pacman", "-Sy"],
                         env={**os.environ, 'LC_ALL': 'C'})
 
@@ -90,6 +103,10 @@ def main():
         sys.exit(result.returncode)
 
     def pacman_removeauto():
+        lock, msg = pacman_control_lock()
+        if not lock:
+            print("pacman lock error: {}".format(msg), file=sys.stderr)
+            sys.exit(11)
         res = subprocess.run(["pacman", "-Qdtq"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                              env={**os.environ, "LC_ALL": "C"})
         orphans = [p.strip() for p in res.stdout.decode("utf-8", errors="ignore").splitlines() if p.strip()]
@@ -349,17 +366,33 @@ def main():
         rcu["cache_error"] = cache_error
 
         def summary(packagename):
-            package = cache.get(packagename)
+            if cache is None:
+                return ""
+            try:
+                package = cache[packagename]
+            except Exception:
+                return ""
             if package is None:
                 return ""
             try:
-                return package.candidate.summary
-            except AttributeError:
-                sum = package.versions.get(0)
-            return sum.summary if hasattr(sum, "summary") else "Summary is not found"
+                if package.candidate and hasattr(package.candidate, "summary"):
+                    return package.candidate.summary
+            except Exception:
+                pass
+            try:
+                if package.versions and len(package.versions) > 0:
+                    return getattr(package.versions[0], "summary", "Summary is not found")
+            except Exception:
+                pass
+            return "Summary is not found"
 
         def candidate_version(packagename):
-            package = cache[packagename]
+            if cache is None:
+                return ""
+            try:
+                package = cache[packagename]
+            except Exception:
+                return ""
             if package is None:
                 return ""
             try:
@@ -372,7 +405,12 @@ def main():
             return version
 
         def installed_version(packagename):
-            package = cache[packagename]
+            if cache is None:
+                return ""
+            try:
+                package = cache[packagename]
+            except Exception:
+                return ""
             if package is None:
                 return ""
             try:
@@ -490,7 +528,7 @@ def main():
             if not os.path.exists(service_symlink_dir):
                 os.makedirs(service_symlink_dir, exist_ok=True)
             service_symlink_file = Path(service_symlink_path)
-            if service_symlink_file.exists():
+            if service_symlink_file.is_symlink() or service_symlink_file.exists():
                 service_symlink_file.unlink(missing_ok=True)
             service_symlink_file.symlink_to(service_path)
 
@@ -522,8 +560,10 @@ def main():
             except Exception:
                 current_theme = ""
             if current_theme != "bgrt":
-                subprocess.run(["plymouth-set-default-theme", "bgrt"])
-                subprocess.run(["update-initramfs", "-u"])
+                if shutil.which("plymouth-set-default-theme"):
+                    subprocess.run(["plymouth-set-default-theme", "bgrt"])
+                if shutil.which("update-initramfs"):
+                    subprocess.run(["update-initramfs", "-u"])
 
             sup_path = "/system-update"
             if os.path.exists(sup_path):
@@ -583,27 +623,40 @@ def main():
     if len(sys.argv) > 1:
         action = sys.argv[1]
         if action == "upgrade":
+            yq = sys.argv[2] if len(sys.argv) > 2 else "yes"
+            dpkg_conf = sys.argv[3] if len(sys.argv) > 3 else "new"
+            keeps = sys.argv[4] if len(sys.argv) > 4 else None
             subupdate()
-            subupgrade(sys.argv[2], sys.argv[3], sys.argv[4] if len(sys.argv) > 4 else None)
+            subupgrade(yq, dpkg_conf, keeps)
         elif action == "removeresidual":
-            removeresidual(sys.argv[2])
+            pkgs = sys.argv[2] if len(sys.argv) > 2 else ""
+            removeresidual(pkgs)
         elif action == "removeauto":
             removeauto()
         elif action == "controldistupgrade":
             aptclean()
-            controldistupgrade(sys.argv[2])
+            slist = sys.argv[2] if len(sys.argv) > 2 else ""
+            controldistupgrade(slist)
         elif action == "downupgrade":
-            downupgrade(sys.argv[2])
+            slist = sys.argv[2] if len(sys.argv) > 2 else ""
+            downupgrade(slist)
         elif action == "distupgradeoffline":
-            distupgradeoffline(sys.argv[2], sys.argv[3])
+            slist = sys.argv[2] if len(sys.argv) > 2 else ""
+            askconf = sys.argv[3] if len(sys.argv) > 3 else "new"
+            distupgradeoffline(slist, askconf)
         elif action == "dpkgconfigure":
             dpkgconfigure()
         elif action == "aptclear":
-            aptclear(sys.argv[2], sys.argv[3], sys.argv[4])
+            clean = sys.argv[2] if len(sys.argv) > 2 else "1"
+            autoremove = sys.argv[3] if len(sys.argv) > 3 else "0"
+            aptlists = sys.argv[4] if len(sys.argv) > 4 else "0"
+            aptclear(clean, autoremove, aptlists)
         else:
-            print("unknown argument error")
+            print(f"unknown argument error: '{action}'", file=sys.stderr)
+            sys.exit(1)
     else:
-        print("no argument passed")
+        print("no argument passed", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

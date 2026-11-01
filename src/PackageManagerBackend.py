@@ -85,7 +85,7 @@ def get_distro_info():
     distro_id = distro_info["id"]
     distro_like = distro_info["like"]
 
-    if distro_id in ["arch", "manjaro", "endeavouros", "garuda", "artix"] or "arch" in distro_like.split():
+    if distro_id in ["arch", "manjaro", "endeavouros", "garuda", "artix", "cachyos", "arcolinux", "arco", "parabola", "blackarch"] or "arch" in distro_like.split():
         distro_info["package_manager"] = "pacman"
     elif shutil.which("pacman") and not shutil.which("apt"):
         distro_info["package_manager"] = "pacman"
@@ -159,8 +159,63 @@ class PacmanBackend(object):
             return False, msg
         return True, ""
 
+    def _parse_pacman_info_output(self, raw_text):
+        """Parses pacman -Si or pacman -Qi output handling multi-line wrapped fields."""
+        if not raw_text:
+            return
+        sections = re.split(r'\n\s*\n', raw_text.strip())
+        for sec in sections:
+            info = {
+                "name": "",
+                "version": "",
+                "description": "",
+                "architecture": "",
+                "url": "",
+                "download_size": 0,
+                "installed_size": 0,
+                "packager": "",
+                "repository": "",
+                "depends": [],
+            }
+            current_key = None
+            for line in sec.splitlines():
+                if ":" in line and not line.startswith(" "):
+                    k, v = line.split(":", 1)
+                    k = k.strip()
+                    v = v.strip()
+                    current_key = k
+                    if k in ("Name", "İsim"):
+                        info["name"] = v
+                    elif k in ("Version", "Sürüm"):
+                        info["version"] = v
+                    elif k in ("Description", "Açıklama"):
+                        info["description"] = v
+                    elif k in ("Architecture", "Mimari"):
+                        info["architecture"] = v
+                    elif k == "URL":
+                        info["url"] = v
+                    elif k in ("Download Size", "İndirme Boyutu"):
+                        info["download_size"] = parse_pacman_size_str(v)
+                    elif k in ("Installed Size", "Kurulum Boyutu"):
+                        info["installed_size"] = parse_pacman_size_str(v)
+                    elif k in ("Packager", "Paketçi"):
+                        info["packager"] = v
+                    elif k in ("Repository", "Depo"):
+                        info["repository"] = v
+                    elif k in ("Depends On", "Bağımlılıkları"):
+                        info["depends"] = [d for d in v.split() if d and d != "None" and d != "Hiçbiri"]
+                elif current_key and line.startswith(" "):
+                    continuation = line.strip()
+                    if current_key in ("Depends On", "Bağımlılıkları"):
+                        info["depends"].extend([d for d in continuation.split() if d and d != "None" and d != "Hiçbiri"])
+                    elif current_key in ("Description", "Açıklama"):
+                        info["description"] += " " + continuation
+
+            if info["name"]:
+                self._pkg_info_cache[info["name"]] = info
+
     def _query_pacman_si_batch(self, packagenames):
-        """Batch queries pacman -Si for multiple packages to eliminate subprocess overhead."""
+        """Batch queries pacman -Si for multiple packages with fallback for local packages."""
         needed = [p for p in packagenames if p and p not in self._pkg_info_cache]
         if not needed:
             return
@@ -168,12 +223,21 @@ class PacmanBackend(object):
         cmd = ["pacman", "-Si"] + needed
         res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              env={**os.environ, "LC_ALL": "C"})
-        if res.returncode == 0:
-            raw_text = res.stdout.decode("utf-8", errors="ignore").strip()
-            sections = raw_text.split("\n\n")
-            for sec in sections:
-                info = {
-                    "name": "",
+        if res.stdout:
+            self._parse_pacman_info_output(res.stdout.decode("utf-8", errors="ignore"))
+
+        missing = [p for p in needed if p not in self._pkg_info_cache]
+        if missing:
+            cmd_qi = ["pacman", "-Qi"] + missing
+            res_qi = subprocess.run(cmd_qi, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                    env={**os.environ, "LC_ALL": "C"})
+            if res_qi.stdout:
+                self._parse_pacman_info_output(res_qi.stdout.decode("utf-8", errors="ignore"))
+
+        for p in needed:
+            if p not in self._pkg_info_cache:
+                self._pkg_info_cache[p] = {
+                    "name": p,
                     "version": "",
                     "description": "",
                     "architecture": "",
@@ -184,41 +248,12 @@ class PacmanBackend(object):
                     "repository": "",
                     "depends": [],
                 }
-                for line in sec.splitlines():
-                    if ":" not in line:
-                        continue
-                    k, v = line.split(":", 1)
-                    k = k.strip()
-                    v = v.strip()
-                    if k == "Name":
-                        info["name"] = v
-                    elif k == "Version":
-                        info["version"] = v
-                    elif k == "Description":
-                        info["description"] = v
-                    elif k == "Architecture":
-                        info["architecture"] = v
-                    elif k == "URL":
-                        info["url"] = v
-                    elif k == "Download Size":
-                        info["download_size"] = parse_pacman_size_str(v)
-                    elif k == "Installed Size":
-                        info["installed_size"] = parse_pacman_size_str(v)
-                    elif k == "Packager":
-                        info["packager"] = v
-                    elif k == "Repository":
-                        info["repository"] = v
-                    elif k == "Depends On":
-                        info["depends"] = [d for d in v.split() if d and d != "None"]
-                if info["name"]:
-                    self._pkg_info_cache[info["name"]] = info
 
     def _query_pacman_si(self, packagename):
         """Queries pacman -Si for a package with in-memory caching."""
-        if packagename in self._pkg_info_cache:
-            return self._pkg_info_cache[packagename]
-
-        info = {
+        if packagename not in self._pkg_info_cache:
+            self._query_pacman_si_batch([packagename])
+        return self._pkg_info_cache.get(packagename, {
             "name": packagename,
             "version": "",
             "description": "",
@@ -229,46 +264,7 @@ class PacmanBackend(object):
             "packager": "",
             "repository": "",
             "depends": [],
-        }
-
-        # Try pacman -Si first (sync repository)
-        cmd = ["pacman", "-Si", packagename]
-        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                             env={**os.environ, "LC_ALL": "C"})
-        if res.returncode != 0:
-            # Fallback to pacman -Qi (installed package)
-            cmd = ["pacman", "-Qi", packagename]
-            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                 env={**os.environ, "LC_ALL": "C"})
-
-        if res.returncode == 0:
-            for line in res.stdout.decode("utf-8", errors="ignore").splitlines():
-                if ":" not in line:
-                    continue
-                k, v = line.split(":", 1)
-                k = k.strip()
-                v = v.strip()
-                if k == "Version":
-                    info["version"] = v
-                elif k == "Description":
-                    info["description"] = v
-                elif k == "Architecture":
-                    info["architecture"] = v
-                elif k == "URL":
-                    info["url"] = v
-                elif k == "Download Size":
-                    info["download_size"] = parse_pacman_size_str(v)
-                elif k == "Installed Size":
-                    info["installed_size"] = parse_pacman_size_str(v)
-                elif k == "Packager":
-                    info["packager"] = v
-                elif k == "Repository":
-                    info["repository"] = v
-                elif k == "Depends On":
-                    info["depends"] = [d for d in v.split() if d and d != "None"]
-
-        self._pkg_info_cache[packagename] = info
-        return info
+        })
 
     def controlPackageCache(self, packagename):
         info = self._query_pacman_si(packagename)
@@ -288,7 +284,7 @@ class PacmanBackend(object):
 
     def get_rdepends(self, packagename, only_upgradable=False):
         # Optional reverse dependency lookup
-        rdepends = []
+        rdependencies = []
         res = subprocess.run(["pacman", "-Sii", packagename], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                              env={**os.environ, "LC_ALL": "C"})
         if res.returncode == 0:
@@ -296,8 +292,8 @@ class PacmanBackend(object):
                 if line.startswith("Required By"):
                     parts = line.split(":", 1)
                     if len(parts) > 1:
-                        rdepends = [p for p in parts[1].split() if p and p != "None"]
-        return rdepends
+                        rdependencies = [p for p in parts[1].split() if p and p != "None"]
+        return rdependencies
 
     def description(self, packagename, israw=False):
         info = self._query_pacman_si(packagename)
@@ -315,12 +311,16 @@ class PacmanBackend(object):
         return summary if summary else "Summary is not found"
 
     def candidate_version(self, packagename):
+        if not self._upgradable_cache:
+            self._fetch_upgrades_raw()
         if packagename in self._upgradable_cache:
             return self._upgradable_cache[packagename].get("new_version", "")
         info = self._query_pacman_si(packagename)
         return info.get("version", "")
 
     def installed_version(self, packagename):
+        if packagename in self._upgradable_cache and self._upgradable_cache[packagename].get("old_version"):
+            return self._upgradable_cache[packagename]["old_version"]
         res = subprocess.run(["pacman", "-Q", packagename], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                              env={**os.environ, "LC_ALL": "C"})
         if res.returncode == 0:
@@ -361,13 +361,10 @@ class PacmanBackend(object):
             if res.returncode in (0, 2):  # 0: updates found, 2: no updates
                 for line in res.stdout.decode("utf-8", errors="ignore").splitlines():
                     line = line.strip()
-                    if " -> " in line:
-                        parts = line.split()
-                        if len(parts) >= 4 and parts[2] == "->":
-                            name = parts[0]
-                            old_ver = parts[1]
-                            new_ver = parts[3]
-                            updates[name] = {"name": name, "old_version": old_ver, "new_version": new_ver}
+                    m = re.match(r'^(\S+)\s+(?:\[ignored\]\s+)?(\S+)\s+->\s+(\S+)', line)
+                    if m:
+                        name, old_ver, new_ver = m.groups()
+                        updates[name] = {"name": name, "old_version": old_ver, "new_version": new_ver}
                 self._upgradable_cache = updates
                 return updates
 
@@ -377,13 +374,10 @@ class PacmanBackend(object):
         if res.returncode == 0:
             for line in res.stdout.decode("utf-8", errors="ignore").splitlines():
                 line = line.strip()
-                if " -> " in line:
-                    parts = line.split()
-                    if len(parts) >= 4 and parts[2] == "->":
-                        name = parts[0]
-                        old_ver = parts[1]
-                        new_ver = parts[3]
-                        updates[name] = {"name": name, "old_version": old_ver, "new_version": new_ver}
+                m = re.match(r'^(\S+)\s+(?:\[ignored\]\s+)?(\S+)\s+->\s+(\S+)', line)
+                if m:
+                    name, old_ver, new_ver = m.groups()
+                    updates[name] = {"name": name, "old_version": old_ver, "new_version": new_ver}
                 elif line:
                     parts = line.split()
                     if parts:
@@ -475,6 +469,8 @@ class PacmanBackend(object):
     def required_changes_autoremove(self, packages, sleep=True):
         if sleep:
             time.sleep(0.2)
+        if isinstance(packages, str):
+            packages = [packages]
 
         to_delete = []
         install_size = 0
@@ -496,6 +492,10 @@ class PacmanBackend(object):
             "package_broken": False,
         }
         return ret
+
+    def required_changes(self, packages, sleep=True):
+        """Legacy alias for required_changes_autoremove."""
+        return self.required_changes_autoremove(packages, sleep=sleep)
 
     def get_appname_from_desktopfile(self, desktopname):
         """Finds which package owns a desktop file using pacman -Qo."""
@@ -591,12 +591,20 @@ class PacmanBackend(object):
         return info.get("repository", "extra")
 
     def get_sources(self):
-        """Parses /etc/pacman.d/mirrorlist and returns mirrors."""
+        """Parses all /etc/pacman.d/*mirrorlist* files and returns mirrors."""
         repos = {}
-        mirrorlist = "/etc/pacman.d/mirrorlist"
-        if os.path.exists(mirrorlist):
+        mirror_files = []
+        pacman_d = "/etc/pacman.d"
+        if os.path.isdir(pacman_d):
+            for fname in sorted(os.listdir(pacman_d)):
+                if "mirrorlist" in fname and not fname.endswith(".pacnew") and not fname.endswith(".pacsave"):
+                    mirror_files.append(os.path.join(pacman_d, fname))
+        if not mirror_files and os.path.exists("/etc/pacman.d/mirrorlist"):
+            mirror_files.append("/etc/pacman.d/mirrorlist")
+
+        for mfile in mirror_files:
             try:
-                with open(mirrorlist, "r", encoding="utf-8") as f:
+                with open(mfile, "r", encoding="utf-8") as f:
                     for line in f:
                         stripped = line.strip()
                         if stripped.startswith("Server") or stripped.startswith("#Server"):
@@ -606,7 +614,7 @@ class PacmanBackend(object):
                             if len(parts) == 2:
                                 url = parts[1].strip()
                                 repos.setdefault(url, []).append({
-                                    "file": mirrorlist,
+                                    "file": mfile,
                                     "comps": [],
                                     "disabled": disabled,
                                     "dist": "",
@@ -616,11 +624,11 @@ class PacmanBackend(object):
                                     "architectures": ["x86_64"]
                                 })
             except Exception as e:
-                print("Error reading mirrorlist: {}".format(e))
+                print("Error reading mirrorlist {}: {}".format(mfile, e))
         return repos
 
     def versionCompare(self, version1, version2):
-        if not version2 or version2 == "None":
+        if not version1 or version1 == "None" or not version2 or version2 == "None":
             return False
         # Use pacman's native vercmp binary
         if shutil.which("vercmp"):
@@ -634,6 +642,6 @@ class PacmanBackend(object):
                 pass
 
         # Fallback comparison
-        if version1 == version2:
+        if str(version1) == str(version2):
             return 0
-        return 1 if version1 > version2 else -1
+        return 1 if str(version1) > str(version2) else -1

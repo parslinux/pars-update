@@ -22,7 +22,7 @@ def create_mo_files():
 
 
 changelog = "debian/changelog"
-version = "1.4.3"
+version = "1.5.0"
 if os.path.exists(changelog):
     try:
         head = open(changelog).readline()
@@ -44,15 +44,12 @@ data_files = [
                  ("/usr/bin", ["pars-update"]),
                  ("/usr/share/applications",
                   ["data/org.pars.update.desktop"]),
-                 ("/usr/share/pars/pars-update/ui",
-                  ["ui/MainWindow.glade"]),
                  ("/usr/share/pars/pars-update/src",
                   ["src/AptSourceActions.py",
                    "src/AutoAptUpdate.py",
                    "src/Group.py",
                    "src/Main.py",
                    "src/MainAdw.py",
-                   "src/MainWindow.py",
                    "src/Package.py",
                    "src/PackageManagerBackend.py",
                    "src/RepoDistControl.py",
@@ -65,6 +62,7 @@ data_files = [
                  ("/usr/share/pars/pars-update/src/core",
                   ["src/core/__init__.py",
                    "src/core/ConfigManager.py",
+                   "src/core/NetworkMonitor.py",
                    "src/core/NotificationManager.py",
                    "src/core/TerminalRunner.py",
                    "src/core/UpdateEngine.py"]),

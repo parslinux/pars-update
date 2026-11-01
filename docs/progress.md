@@ -34,13 +34,16 @@ Bu belge, **Pars Update (`pars-update`)** projesinde tamamlanan kilometre taşla
 - [x] **Pars Update Rebranding:** Kod tabanının Pars Update (`pars-update`, `org.pars.update`) olarak tam uyarlanması.
 
 ### Kalite Güvencesi ve Testler
-- [x] **Kapsamlı Test Paketi (`tests/`):** 17 birim ve entegrasyon testi ile %100 başarı oranı (`test_arch_and_backend.py`, `test_core_and_adw.py`).
+- [x] **Kapsamlı Test Paketi (`tests/`):** 23 birim ve entegrasyon testi ile %100 başarı oranı (`test_arch_and_backend.py`, `test_core_and_adw.py`).
 
 ---
 
-## 2. Mevcut Durum (Current Status - v1.4.4)
+## 2. Mevcut Durum (Current Status - v1.5.0)
 * **Mimari:** Çekirdek (Core) ve UI katmanları tamamen ayrıştırıldı.
 * **Modern Arayüz:** GTK4 ve Libadwaita tam olarak entegre edildi, eski GTK3 arayüzü yedek olarak korundu.
+* **Ağ ve Kota Koruması:** `NetworkMonitor` ve `Adw.Banner` ile kotalı/mobil ağlarda veri tüketimi kontrolü sağlandı.
+* **Çekirdek Uyarısı:** Kritik paket güncellemelerinde yeniden başlatma rozeti ve işlem sonu uyarı diyaloğu eklendi.
+* **Paket Detayları & Changelog:** Her paket için sürüm, açıklama, bağımlılıklar, web bağlantısı ve değişiklik günlüğü penceresi entegre edildi.
 * **Dağıtım Desteği:** Hem Arch Linux hem de Debian/Pars Linux üzerinde tam performansla yerel araçlarla çalışmaktadır.
 * **Paketleme:** `setup.py`, `PKGBUILD` ve `debian/control` yeni bağımlılıklar ve dizin yapısıyla güncellendi.
 
@@ -48,10 +51,10 @@ Bu belge, **Pars Update (`pars-update`)** projesinde tamamlanan kilometre taşla
 
 ## 3. Gelecek Yol Haritası (Future Roadmap)
 
-### Kısa Vadeli Hedefler (v1.5.0)
-- [ ] **NetworkManager Entegrasyonu:** Mobil / kotalı ağ tespit edildiğinde otomatik indirmeyi duraklatma ve kullanıcıyı uyarma.
-- [ ] **Çekirdek (Kernel) Güncelleme Bildirimi:** Sistem yeniden başlatma gerektiren çekirdek veya glibc güncellemelerinde yeniden başlatma rozeti gösterme.
-- [ ] **Detaylı Paket Değişiklik Günlüğü (Changelog Görüntüleyici):** Seçilen paketin sürüm notlarını arayüz içinden doğrudan görüntüleme.
+### Kısa Vadeli Hedefler (v1.5.0) - TAMAMLANDI ✅
+- [x] **NetworkManager Entegrasyonu:** Mobil / kotalı ağ tespit edildiğinde otomatik indirmeyi duraklatma ve kullanıcıyı uyarma (`NetworkMonitor`, `Adw.Banner`).
+- [x] **Çekirdek (Kernel) Güncelleme Bildirimi:** Sistem yeniden başlatma gerektiren çekirdek veya glibc güncellemelerinde yeniden başlatma rozeti gösterme (`requires_reboot`, `.badge-reboot`, `Adw.MessageDialog`).
+- [x] **Detaylı Paket Değişiklik Günlüğü (Changelog Görüntüleyici):** Seçilen paketin sürüm notlarını ve detaylarını arayüz içinden doğrudan görüntüleme (`get_package_details`, `Adw.Window`).
 
 ### Uzun Vadeli Hedefler (v2.0.0+)
 - [ ] **Flatpak & Snap Desteği:** Sistem paketlerinin yanı sıra kurulu sandbox uygulamalarının güncellemelerini de birleşik ekranda listeleme.
